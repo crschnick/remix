@@ -1,4 +1,4 @@
-package org.monospark.remix;
+package org.monospark.remix.sample;
 
 public class Sample {
 

@@ -1,2 +1,5 @@
-rootProject.name = 'Java16Test'
+rootProject.name = 'remix'
+include 'core'
+include 'sample'
+include 'speedtest'
 

@@ -3,8 +3,8 @@ package org.monospark.remix.internal;
 import java.util.*;
 import java.util.function.Function;
 
-import static org.monospark.remix.Action.NOT_NULL;
-import static org.monospark.remix.Action.SIZE_GREATER_ZERO;
+import static org.monospark.remix.SetAction.NOT_NULL;
+import static org.monospark.remix.SetAction.SIZE_GREATER_ZERO;
 
 public class ActionImpl {
 

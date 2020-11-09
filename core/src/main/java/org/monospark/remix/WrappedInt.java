@@ -11,14 +11,6 @@ public final class WrappedInt extends Wrapper {
         this.value = value;
     }
 
-    public void set(int value) {
-        if (!getRecordParameter().isMutable()) {
-            throw new IllegalStateException(
-                    "Record component " + getRecordParameter().getComponent().getName() + " is not mutable");
-        }
-        this.value = value;
-    }
-
     public int get() {
         return value;
     }

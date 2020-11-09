@@ -1,6 +1,6 @@
 package org.monospark.remix.internal;
 
-import org.monospark.remix.Action;
+import org.monospark.remix.SetAction;
 import org.monospark.remix.Default;
 
 import java.lang.reflect.AnnotatedElement;
@@ -26,7 +26,7 @@ public class RecordParameter {
     }
 
     static List<String> getActions(AnnotatedElement p) {
-        return Optional.ofNullable(p.getAnnotation(Action.class))
+        return Optional.ofNullable(p.getAnnotation(SetAction.class))
                 .map(a -> Arrays.asList(a.value()))
                 .orElse(List.of());
     }

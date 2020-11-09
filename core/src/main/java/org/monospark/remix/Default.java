@@ -9,10 +9,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Default {
 
-    String ZERO = "zero";
-    String ONE = "one";
-    String MINUS_ONE = "minus-one";
-    String NULL = "null";
+    public Class<? extends Default.Factory> value();
 
-    public String value();
+    @FunctionalInterface
+    public static interface Factory {
+        Object create(Class<?> clazz);
+    }
 }

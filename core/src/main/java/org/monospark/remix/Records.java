@@ -30,4 +30,16 @@ public class Records {
     public static <T> void set(Mutable<T> entry, T value) {
         entry.set(value);
     }
+
+    public static <T> void set(Supplier<Mutable<T>> entry, T value) {
+        entry.get().set(value);
+    }
+
+    public static void set(MutableBoolean entry, boolean value) {
+        entry.set(value);
+    }
+
+    public static void set(Supplier<MutableBoolean> entry, boolean value) {
+        entry.get().set(value);
+    }
 }

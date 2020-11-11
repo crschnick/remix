@@ -13,14 +13,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class RecordParameter<T> {
+public class RecordParameter {
 
     private RecordComponent component;
-    private RecordComponentType<T> type;
+    private RecordComponentType<?> type;
     private DefaultAnnotationType defaultValue;
-    private List<Action<Object>> constructActions;
-    private List<Action<Object>> setActions;
-    private List<Action<Object>> getActions;
+    private List<Action> constructActions;
+    private List<Action> setActions;
+    private List<Action> getActions;
 
     public RecordParameter(RecordComponent component, RecordComponentType type, DefaultAnnotationType defaultValue, List<Action> constructActions, List<Action> setActions, List<Action> getActions) {
         this.component = component;
@@ -31,7 +31,7 @@ public class RecordParameter<T> {
         this.getActions = getActions;
     }
 
-    private static <T> List<Action<Object>> mapConstructActions(AnnotatedElement p) {
+    private static <T> List<Action> mapConstructActions(AnnotatedElement p) {
         return Optional.ofNullable(p.getAnnotation(Assign.class))
                 .map(a -> Arrays.stream(a.value())
                         .map(Actions::getActionInstance)
@@ -39,7 +39,7 @@ public class RecordParameter<T> {
                 .orElse(List.of());
     }
 
-    private static List<Action<Object>> mapSetActions(AnnotatedElement p) {
+    private static List<Action> mapSetActions(AnnotatedElement p) {
         return Optional.ofNullable(p.getAnnotation(Assign.class))
                 .map(a -> a.set().length > 0 ? a.set() : a.value())
                 .map(a -> Arrays.stream(a)
@@ -48,7 +48,7 @@ public class RecordParameter<T> {
                 .orElse(List.of());
     }
 
-    private static List<Action<Object>> mapGetActions(AnnotatedElement p) {
+    private static List<Action> mapGetActions(AnnotatedElement p) {
         return Optional.ofNullable(p.getAnnotation(Get.class))
                 .map(a -> Arrays.stream(a.value())
                         .map(Actions::getActionInstance)
@@ -93,11 +93,11 @@ public class RecordParameter<T> {
         return (T) ((Wrapper) wrapper).getRecordParameter();
     }
 
-    public T applyGetActions(T value) {
+    public <T> T applyGetActions(T value) {
         return Actions.executeActions(value, getActions);
     }
 
-    public T applySetActions(T value) {
+    public <T> T applySetActions(T value) {
         return Actions.executeActions(value, setActions);
     }
 
@@ -125,15 +125,15 @@ public class RecordParameter<T> {
         return defaultValue;
     }
 
-    public List<Action<?>> getConstructActions() {
+    public List<Action> getConstructActions() {
         return constructActions;
     }
 
-    public List<Action<?>> getSetActions() {
+    public List<Action> getSetActions() {
         return setActions;
     }
 
-    public List<Action<?>> getGetActions() {
+    public List<Action> getGetActions() {
         return getActions;
     }
 }

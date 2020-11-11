@@ -37,7 +37,7 @@ public class Actions {
      *
      * Throws a {@code NullPointerException} if the argument is null.
      **/
-    public static final class NotNull implements Action {
+    public static final class NotNull implements AssignAction {
 
         @Override
         public Object apply(Object obj) {
@@ -46,7 +46,7 @@ public class Actions {
         }
     }
 
-    public static final class Unmodifiable implements Action {
+    public static final class Unmodifiable implements AssignAction {
 
         @Override
         public Object apply(Object obj) {
@@ -77,7 +77,7 @@ public class Actions {
         }
     }
 
-    public static final class Copy implements Action {
+    public static final class Copy implements AssignAction {
 
         @Override
         public Object apply(Object obj) {
@@ -90,11 +90,11 @@ public class Actions {
         }
     }
 
-    public static final class Sort implements Action {
+    public static final class Sort implements AssignAction {
 
         @Override
         public Object apply(Object obj) {
-            Collections.sort((List<? extends Comparable) obj);
+            Collections.sort((List<? extends Comparable>) obj);
             return obj;
         }
     }

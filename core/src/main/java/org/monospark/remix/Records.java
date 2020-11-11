@@ -1,7 +1,7 @@
 package org.monospark.remix;
 
 import org.monospark.remix.internal.RecordCache;
-import org.monospark.remix.internal.WrappedBuilder;
+import org.monospark.remix.internal.RecordBuilderImpl;
 
 import java.util.List;
 import java.util.function.Function;
@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 public class Records {
 
     public static <R extends Record> RecordBuilder<R> builder(Class<R> clazz) {
-        return new WrappedBuilder<>(clazz);
+        return new RecordBuilderImpl<>(clazz);
     }
 
     public static <R extends Record> RecordBuilder<R> builderWith(R object) {

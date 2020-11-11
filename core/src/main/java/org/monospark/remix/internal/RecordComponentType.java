@@ -21,6 +21,10 @@ public abstract class RecordComponentType<T> {
 
     abstract boolean isWrapped();
 
+    public Object wrapDefault(RecordParameter param, DefaultAnnotationType defaultValue) {
+        return wrap(param, defaultValue, (T) DefaultValueHelper.createDefaultValue(param.getComponent().getType()));
+    }
+
     public abstract Object wrap(RecordParameter param, DefaultAnnotationType defaultValue, T value);
 
     public abstract Class<? extends T> getValueType();

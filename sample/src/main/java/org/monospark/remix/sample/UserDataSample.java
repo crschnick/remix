@@ -38,7 +38,7 @@ public class UserDataSample {
     }
 
     public static void onLoginRemix() {
-        UserDataRemix d = null;
+        UserDataRemix d = Records.builder(UserDataRemix.class).set(UserDataRemix::online, false).build();
         Records.set(d::online, true);
         Records.set(d::lastLogin, LocalDateTime.now());
     }

@@ -42,11 +42,13 @@ public class RecordCacheData<T extends Record> {
     private T recordInstance;
     private Constructor<T> constructor;
     private List<RecordParameter> parameters;
+    private RecordBuilderCacheData<T> builderCache;
 
     private RecordCacheData(Constructor<T> constructor, List<RecordParameter> parameters) {
         this.recordInstance = defaultRecordInstance(constructor, parameters);
         this.constructor = constructor;
         this.parameters = parameters;
+        this.builderCache = new RecordBuilderCacheData<T>(parameters);
     }
 
     private static Object create(Constructor<?> constructor, List<RecordParameter> parameters, Object... args) {
@@ -109,5 +111,13 @@ public class RecordCacheData<T extends Record> {
 
     public T getRecordInstance() {
         return recordInstance;
+    }
+
+    public RecordBuilderCacheData<T> getBuilderCache() {
+        return builderCache;
+    }
+
+    public List<RecordParameter> getParameters() {
+        return parameters;
     }
 }

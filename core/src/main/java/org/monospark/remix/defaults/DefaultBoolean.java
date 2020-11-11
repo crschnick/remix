@@ -1,4 +1,4 @@
-package org.monospark.remix;
+package org.monospark.remix.defaults;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,11 +7,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.RECORD_COMPONENT)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface DefaultCustom {
+public @interface DefaultBoolean {
 
-    public Class<? extends Factory> value();
-
-    public static interface Factory {
-        Object create();
-    }
+    boolean value();
 }

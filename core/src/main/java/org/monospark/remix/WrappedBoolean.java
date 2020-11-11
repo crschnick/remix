@@ -1,17 +1,8 @@
 package org.monospark.remix;
 
-import org.monospark.remix.internal.RecordParameter;
+import org.monospark.remix.internal.WrappedBooleanImpl;
 
-public class WrappedBoolean extends Wrapper {
+public sealed interface WrappedBoolean permits WrappedBooleanImpl {
 
-    protected boolean value;
-
-    public WrappedBoolean(RecordParameter recordParameter, boolean value) {
-        super(recordParameter);
-        this.value = value;
-    }
-
-    public boolean get() {
-        return value;
-    }
+    boolean get();
 }

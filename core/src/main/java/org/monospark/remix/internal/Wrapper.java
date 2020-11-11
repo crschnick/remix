@@ -1,12 +1,10 @@
-package org.monospark.remix;
+package org.monospark.remix.internal;
 
-import org.monospark.remix.internal.RecordParameter;
-
-public abstract class Wrapper {
+public class Wrapper {
 
     private RecordParameter recordParameter;
 
-    public Wrapper(RecordParameter recordParameter) {
+    Wrapper(RecordParameter recordParameter) {
         this.recordParameter = recordParameter;
     }
 

@@ -1,14 +1,14 @@
 package org.monospark.remix.sample;
 
-import org.monospark.remix.SetAction;
-import org.monospark.remix.Default;
-import org.monospark.remix.Records;
+import static org.monospark.remix.actions.Actions.*;
+
 import org.monospark.remix.Wrapped;
+import org.monospark.remix.actions.Assign;
+import org.monospark.remix.Records;
+import org.monospark.remix.defaults.Default;
+import static org.monospark.remix.defaults.Defaults.*;
 
 import java.util.*;
-
-import static org.monospark.remix.SetAction.*;
-import static org.monospark.remix.DefaultValues.NULL;
 
 public class BibliographySample {
 
@@ -55,20 +55,20 @@ public class BibliographySample {
     }
 
     public static record BibliographyEntryRemix(
-            @SetAction({NOT_NULL, SIZE_GREATER_ZERO, UNMODIFIABLE_LIST})
+            @Default(Null.class)
             Wrapped<List<String>> authors,
 
-            @SetAction({NOT_NULL})
+            @Assign(NotNull.class)
             Wrapped<String> title,
 
-            @Default(NULL)
+            @Default(Null.class)
             Wrapped<String> sourceInformation,
 
-            @Default(NULL)
+            @Default(Null.class)
             Wrapped<String> citingInformation) {}
 
     public static record BibliographyRemix(
-            @SetAction({NOT_NULL, UNMODIFIABLE_LIST})
+            @Assign({NotNull.class, Unmodifiable.class})
             Wrapped<List<BibliographyEntryRemix>> entries) {}
 
     public static void main(String[] args) {
@@ -77,7 +77,8 @@ public class BibliographySample {
 
         var remixBib = Records.builder(BibliographyRemix.class)
                 .set(BibliographyRemix::entries, new ArrayList<>())
-                .add(BibliographyRemix::entries, BibliographyEntryRemix.class, List.of("test"), "test")
+                .add(BibliographyRemix::entries,
+                        Records.create(BibliographyEntryRemix.class, List.of("test"), "test"))
                 .build();
     }
 

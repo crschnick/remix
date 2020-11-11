@@ -1,7 +1,10 @@
 package org.monospark.remix.internal;
 
-import org.monospark.remix.SetAction;
-import org.monospark.remix.Default;
+import org.monospark.remix.actions.Action;
+import org.monospark.remix.actions.Actions;
+import org.monospark.remix.actions.Assign;
+import org.monospark.remix.actions.Get;
+import org.monospark.remix.defaults.Default;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.RecordComponent;
@@ -10,32 +13,53 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class RecordParameter {
+public class RecordParameter<T> {
 
     private RecordComponent component;
-    private Optional<String> defaultValueType;
-    private List<String> actions;
-    private RecordComponentType type;
+    private RecordComponentType<T> type;
+    private DefaultAnnotationType defaultValue;
+    private List<Action<Object>> constructActions;
+    private List<Action<Object>> setActions;
+    private List<Action<Object>> getActions;
 
-    public RecordParameter(RecordComponent component, Optional<String> defaultValueType,
-                           List<String> actions, RecordComponentType type) {
+    public RecordParameter(RecordComponent component, RecordComponentType type, DefaultAnnotationType defaultValue, List<Action> constructActions, List<Action> setActions, List<Action> getActions) {
         this.component = component;
-        this.defaultValueType = defaultValueType;
-        this.actions = actions;
         this.type = type;
+        this.defaultValue = defaultValue;
+        this.constructActions = constructActions;
+        this.setActions = setActions;
+        this.getActions = getActions;
     }
 
-    static List<String> getActions(AnnotatedElement p) {
-        return Optional.ofNullable(p.getAnnotation(SetAction.class))
-                .map(a -> Arrays.asList(a.value()))
+    private static <T> List<Action<Object>> mapConstructActions(AnnotatedElement p) {
+        return Optional.ofNullable(p.getAnnotation(Assign.class))
+                .map(a -> Arrays.stream(a.value())
+                        .map(Actions::getActionInstance)
+                        .collect(Collectors.toList()))
                 .orElse(List.of());
     }
 
-    static Optional<String> getDefaultValueType(AnnotatedElement p) {
-        return Arrays.stream(p.getAnnotations())
-                .filter(a -> a.annotationType().equals(Default.class))
-                .map(a -> ((Default) a).value())
-                .findFirst();
+    private static List<Action<Object>> mapSetActions(AnnotatedElement p) {
+        return Optional.ofNullable(p.getAnnotation(Assign.class))
+                .map(a -> a.set().length > 0 ? a.set() : a.value())
+                .map(a -> Arrays.stream(a)
+                        .map(Actions::getActionInstance)
+                        .collect(Collectors.toList()))
+                .orElse(List.of());
+    }
+
+    private static List<Action<Object>> mapGetActions(AnnotatedElement p) {
+        return Optional.ofNullable(p.getAnnotation(Get.class))
+                .map(a -> Arrays.stream(a.value())
+                        .map(Actions::getActionInstance)
+                        .collect(Collectors.toList()))
+                .orElse(List.of());
+    }
+
+    static DefaultAnnotationType getDefaultValueType(AnnotatedElement p) {
+        return Optional.ofNullable(p.getAnnotation(Default.class))
+                .map(DefaultAnnotationType::new)
+                .orElse(null);
     }
 
     private static void validate(RecordParameter param) {
@@ -43,7 +67,7 @@ public class RecordParameter {
             if (param.isMutable()) {
                 throw new IllegalArgumentException();
             }
-            if (param.getActions().size() > 0) {
+            if (param.getConstructActions().size() > 0 || param.getSetActions().size() > 0 ||param.getGetActions().size() > 0) {
                 throw new IllegalArgumentException();
             }
         }
@@ -53,18 +77,32 @@ public class RecordParameter {
         var params = Arrays.stream(recordClass.getRecordComponents())
                 .map(comp -> {
                     RecordComponent component = comp;
-                    Optional<String> defaultValueType = getDefaultValueType(comp);
-                    List<String> actions = getActions(comp);
                     RecordComponentType type = RecordComponentType.create(comp.getType());
-                    return new RecordParameter(component, defaultValueType, actions, type);
+                    DefaultAnnotationType defaultValue = getDefaultValueType(comp);
+                    List<Action> constructActions = mapConstructActions(comp);
+                    List<Action> setActions = mapSetActions(comp);
+                    List<Action> getActions = mapGetActions(comp);
+                    return new RecordParameter(component, type, defaultValue, constructActions, setActions, getActions);
                 })
                 .collect(Collectors.toList());
         params.forEach(RecordParameter::validate);
         return params;
     }
 
-    public <T> T applyActions(T value) {
-        return ActionImpl.executeActions(value, actions);
+    static <T> T get(Object wrapper) {
+        return (T) ((Wrapper) wrapper).getRecordParameter();
+    }
+
+    public T applyGetActions(T value) {
+        return Actions.executeActions(value, getActions);
+    }
+
+    public T applySetActions(T value) {
+        return Actions.executeActions(value, setActions);
+    }
+
+    public <T> T applyConstructActions(T value) {
+        return Actions.executeActions(value, constructActions);
     }
 
     public <T extends Record> Class<T> getRecord() {
@@ -79,15 +117,23 @@ public class RecordParameter {
         return component;
     }
 
-    public Optional<String> getDefaultValueType() {
-        return defaultValueType;
-    }
-
-    public List<String> getActions() {
-        return actions;
-    }
-
     public RecordComponentType getType() {
         return type;
+    }
+
+    public DefaultAnnotationType getDefaultValue() {
+        return defaultValue;
+    }
+
+    public List<Action<?>> getConstructActions() {
+        return constructActions;
+    }
+
+    public List<Action<?>> getSetActions() {
+        return setActions;
+    }
+
+    public List<Action<?>> getGetActions() {
+        return getActions;
     }
 }

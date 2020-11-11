@@ -1,14 +1,12 @@
 package org.monospark.remix.internal;
 
-import org.monospark.remix.Default;
 import org.monospark.remix.Mutable;
-import org.monospark.remix.Wrapped;
 import org.monospark.remix.WrappedInt;
 
-public abstract class RecordComponentType {
+public abstract class RecordComponentType<T> {
 
     static RecordComponentType create(Class<?> type) {
-        if (type.equals(Wrapped.class)) {
+        if (type.equals(WrappedImpl.class)) {
             return new WrappedObjectType();
         } else if (type.equals(WrappedInt.class)) {
             return new WrappedIntType();
@@ -23,15 +21,11 @@ public abstract class RecordComponentType {
 
     abstract boolean isWrapped();
 
-    public abstract String getImplicitDefaultType();
+    public abstract Object wrap(RecordParameter param, DefaultAnnotationType defaultValue, T value);
 
-    public abstract Object createDefaultValue(RecordParameter param, String defaultType);
+    public abstract Class<? extends T> getValueType();
 
-    public abstract Object wrap(RecordParameter param, Object obj);
-
-    public abstract Class<?> getValueType();
-
-    public static final class BareType extends RecordComponentType {
+    public static final class BareType extends RecordComponentType<Object> {
 
         private Class<?> clazz;
 
@@ -50,18 +44,8 @@ public abstract class RecordComponentType {
         }
 
         @Override
-        public String getImplicitDefaultType() {
-            return Default.NULL;
-        }
-
-        @Override
-        public Object createDefaultValue(RecordParameter param, String defaultType) {
-            return DefaultImpl.createDefaultValue(clazz);
-        }
-
-        @Override
-        public Object wrap(RecordParameter param, Object obj) {
-            return obj;
+        public Object wrap(RecordParameter param, DefaultAnnotationType defaultValue, Object value) {
+            return defaultValue != null ? defaultValue.defaultObject(param.getComponent().getType()) : null;
         }
 
         @Override
@@ -70,7 +54,7 @@ public abstract class RecordComponentType {
         }
     }
 
-    public static final class WrappedIntType extends RecordComponentType {
+    public static final class WrappedIntType extends RecordComponentType<Integer> {
 
         @Override
         boolean isMutable() {
@@ -83,42 +67,17 @@ public abstract class RecordComponentType {
         }
 
         @Override
-        public String getImplicitDefaultType() {
-            return Default.ZERO;
-        }
-
-
-        @Override
-        public Object createDefaultValue(RecordParameter param, String defaultType) {
-            int val;
-            switch (defaultType) {
-                case Default.ZERO:
-                    val = 0;
-                    break;
-                case Default.ONE:
-                    val = 1;
-                    break;
-                case Default.MINUS_ONE:
-                    val = -1;
-                    break;
-                default:
-                    throw new IllegalArgumentException();
-            }
-            return new WrappedInt(param, val);
+        public Object wrap(RecordParameter param, DefaultAnnotationType defaultValue, Integer value) {
+            return new WrappedIntImpl(param, value == 0 ? defaultValue.defaultInt() : 0);
         }
 
         @Override
-        public Object wrap(RecordParameter param, Object obj) {
-            return new WrappedInt(param, (int) obj);
-        }
-
-        @Override
-        public Class<?> getValueType() {
+        public Class<Integer> getValueType() {
             return Integer.class;
         }
     }
 
-    public static final class WrappedObjectType extends RecordComponentType {
+    public static class WrappedObjectType extends RecordComponentType<Object> {
 
         @Override
         boolean isMutable() {
@@ -131,19 +90,8 @@ public abstract class RecordComponentType {
         }
 
         @Override
-        public String getImplicitDefaultType() {
-            return Default.NULL;
-        }
-
-
-        @Override
-        public Object createDefaultValue(RecordParameter param, String defaultType) {
-            return null;
-        }
-
-        @Override
-        public Object wrap(RecordParameter param, Object obj) {
-            return new Wrapped<>(param, obj);
+        public Object wrap(RecordParameter param, DefaultAnnotationType defaultValue, Object value) {
+            return new WrappedImpl<>(param, value == null ? defaultValue.defaultObject(param.getComponent().getType()) : value);
         }
 
         @Override
@@ -152,37 +100,11 @@ public abstract class RecordComponentType {
         }
     }
 
-    public static final class MutableType extends RecordComponentType {
+    public static final class MutableType extends WrappedObjectType {
 
         @Override
         boolean isMutable() {
             return true;
-        }
-
-        @Override
-        boolean isWrapped() {
-            return true;
-        }
-
-        @Override
-        public String getImplicitDefaultType() {
-            return Default.NULL;
-        }
-
-
-        @Override
-        public Object createDefaultValue(RecordParameter param, String defaultType) {
-            return null;
-        }
-
-        @Override
-        public Object wrap(RecordParameter param, Object obj) {
-            return new Mutable<>(param, obj);
-        }
-
-        @Override
-        public Class<?> getValueType() {
-            return Object.class;
         }
     }
 }

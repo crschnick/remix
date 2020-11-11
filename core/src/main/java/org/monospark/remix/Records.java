@@ -1,22 +1,34 @@
 package org.monospark.remix;
 
 import org.monospark.remix.internal.RecordCache;
+import org.monospark.remix.internal.WrappedBuilder;
 
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class Records {
 
+    public static <R extends Record> RecordBuilder<R> builder(Class<R> clazz) {
+        return new WrappedBuilder<>(clazz);
+    }
+
+    public static <R extends Record> RecordBuilder<R> builderWith(R object) {
+        return null;
+    }
+
+
     public static <R extends Record> R create(Class<R> clazz, Object... args) {
         return (R) RecordCache.getOrAdd(clazz).create(args);
     }
 
-    public static <R extends Record> RecordBuilder<R> builder(Class<R> clazz) {
-        return new RecordBuilder<>(clazz);
-    }
 
     public static <T> T get(Wrapped<T> entry) {
         return entry.get();
+    }
+
+    public static <T> T get(Supplier<Wrapped<List<T>>> entry, int index) {
+        return entry.get().get().get(index);
     }
 
     public static <T> T get(Supplier<Wrapped<T>> entry) {

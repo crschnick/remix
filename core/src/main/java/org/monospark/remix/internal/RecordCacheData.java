@@ -1,17 +1,49 @@
 package org.monospark.remix.internal;
 
+import org.monospark.remix.actions.Actions;
+import org.monospark.remix.defaults.Default;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 
-public class RecordCacheData {
+public class RecordCacheData<T extends Record> {
 
-    private Object recordInstance;
-    private Constructor<?> constructor;
+    private static final List<Class<?>> ANNOTATIONS = List.of(Default.class);
+
+    private static boolean hasRemixAnnotations(Class<? extends Record> recordClass) {
+        return Arrays.stream(recordClass.getRecordComponents())
+                .anyMatch(c -> Arrays.stream(c.getAnnotations())
+                        .anyMatch(a -> ANNOTATIONS.contains(a.annotationType())));
+    }
+
+    private static boolean checkOnlyGeneratedConstructor(Class<? extends Record> recordClass) {
+        if (recordClass.getDeclaredConstructors().length > 1) {
+            throw new IllegalArgumentException();
+        }
+
+        return Arrays.stream(recordClass.getDeclaredConstructors()[0].getParameters())
+                .noneMatch(p -> Arrays.stream(p.getAnnotations())
+                        .anyMatch(a -> ANNOTATIONS.contains(a.annotationType())));
+    }
+
+    static <T extends Record> RecordCacheData<T> fromRecordClass(Class<T> recordClass) {
+        if (!hasRemixAnnotations(recordClass)) {
+            return null;
+        }
+        checkOnlyGeneratedConstructor(recordClass);
+
+        return new RecordCacheData<T>(
+                (Constructor<T>) recordClass.getDeclaredConstructors()[0],
+                RecordParameter.fromRecordComponents(recordClass));
+    }
+
+    private T recordInstance;
+    private Constructor<T> constructor;
     private List<RecordParameter> parameters;
 
-    private RecordCacheData(Constructor<?> constructor, List<RecordParameter> parameters) {
+    private RecordCacheData(Constructor<T> constructor, List<RecordParameter> parameters) {
         this.recordInstance = defaultRecordInstance(constructor, parameters);
         this.constructor = constructor;
         this.parameters = parameters;
@@ -30,17 +62,20 @@ public class RecordCacheData {
                 throw new IllegalArgumentException("Incompatible types " +
                         parameters.get(i).getType().getValueType().getName() + " and " + args[i].getClass().getName());
             }
-            Object afterAction = ActionImpl.executeActions(args[i], parameters.get(i).getActions());
-            newArgs[i] = parameters.get(i).getType().wrap(parameters.get(i), afterAction);
+            Object afterAction = Actions.executeActions(args[i], parameters.get(i).getConstructActions());
+            newArgs[i] = parameters.get(i).getType().wrap(parameters.get(i), parameters.get(i).getDefaultValue(), afterAction);
         }
 
         for (int i = args.length; i < parameters.size(); i++) {
-            var d = parameters.get(i).getDefaultValueType();
-            if (d.isEmpty()) {
-                throw new IllegalArgumentException("Too many arguments");
+            var d = parameters.get(i).getDefaultValue();
+            if (d == null) {
+                throw new IllegalArgumentException("Missing default value for parameter "
+                        + parameters.get(i).getComponent().getName());
             }
-            newArgs[i] = parameters.get(i).getType().createDefaultValue(parameters.get(i),
-                    parameters.get(i).getDefaultValueType().orElse(parameters.get(i).getType().getImplicitDefaultType()));
+            newArgs[i] = parameters.get(i).getType().wrap(
+                    parameters.get(i),
+                    parameters.get(i).getDefaultValue(),
+                    DefaultValueHelper.createDefaultValue(parameters.get(i).getComponent().getType()));
         }
 
         try {
@@ -50,40 +85,18 @@ public class RecordCacheData {
         }
     }
 
-    static boolean hasComponentInfo(Class<? extends Record> recordClass) {
-        return Arrays.stream(recordClass.getRecordComponents())
-                .anyMatch(c -> RecordParameter.getDefaultValueType(c).isPresent() || RecordParameter.getActions(c).size() > 0);
-    }
-
-    static RecordCacheData fromRecordClass(Class<? extends Record> recordClass) {
-        boolean hasComponentInfo = hasComponentInfo(recordClass);
-        if (recordClass.getDeclaredConstructors().length > 1 && hasComponentInfo) {
-            throw new IllegalArgumentException();
-        }
-
-        if (recordClass.getDeclaredConstructors().length == 1 && !hasComponentInfo) {
-            throw new IllegalArgumentException();
-        }
-
-        return new RecordCacheData(
-                recordClass.getDeclaredConstructors()[0],
-                RecordParameter.fromRecordComponents(recordClass));
-    }
-
-    static Object defaultRecordInstance(Constructor<?> constructor, List<RecordParameter> parameters) {
+    static <T extends Record> T defaultRecordInstance(Constructor<T> constructor, List<RecordParameter> parameters) {
         Object[] args = new Object[parameters.size()];
         for (int i = 0; i < args.length; i++) {
-            args[i] = parameters.get(i).getType().createDefaultValue(parameters.get(i),
-                    parameters.get(i).getDefaultValueType().orElse(parameters.get(i).getType().getImplicitDefaultType()));
+            args[i] = parameters.get(i).getType().wrap(
+                    parameters.get(i),
+                    parameters.get(i).getDefaultValue(),
+                    DefaultValueHelper.createDefaultValue(parameters.get(i).getComponent().getType()));
         }
-        Object obj = null;
+        T obj = null;
         try {
             obj = constructor.newInstance(args);
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
         return obj;
@@ -91,14 +104,10 @@ public class RecordCacheData {
 
     public Object create(Object... args) {
         Object o = create(constructor, parameters, args);
-        if (o != null) {
-            return o;
-        }
-
-        throw new RuntimeException();
+        return o;
     }
 
-    public Object getRecordInstance() {
+    public T getRecordInstance() {
         return recordInstance;
     }
 }

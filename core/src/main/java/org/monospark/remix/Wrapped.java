@@ -1,17 +1,8 @@
 package org.monospark.remix;
 
-import org.monospark.remix.internal.RecordParameter;
+import org.monospark.remix.internal.WrappedImpl;
 
-public class Wrapped<T> extends Wrapper {
+public sealed interface Wrapped<T> permits Mutable, WrappedImpl {
 
-    protected T value;
-
-    public Wrapped(RecordParameter param, T value) {
-        super(param);
-        this.value = value;
-    }
-
-    public T get() {
-        return value;
-    }
+    T get();
 }

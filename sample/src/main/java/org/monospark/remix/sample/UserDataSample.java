@@ -1,12 +1,12 @@
 package org.monospark.remix.sample;
 
 import org.monospark.remix.*;
+import org.monospark.remix.actions.Actions;
+import org.monospark.remix.actions.Get;
+import org.monospark.remix.defaults.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
-
-import static org.monospark.remix.Default.*;
 
 public class UserDataSample {
 
@@ -18,16 +18,8 @@ public class UserDataSample {
 
     }
 
-    public static final class Test implements DefaultCustom.Factory{
-
-        @Override
-        public Object create() {
-            return null;
-        }
-    }
-
     public static record UserDataStorageRemix(
-            @GetAction(int.class)
+            //@Get(Actions.Unmodifiable.class)
             Set<UserDataRemix> users) {
 
         public void add(UserData d) {
@@ -40,7 +32,7 @@ public class UserDataSample {
             Mutable<String> password,
             @DefaultBoolean(true)
             MutableBoolean online,
-            @Default(DefaultValues.NOW)
+            @Default(Defaults.Now.class)
             Mutable<LocalDateTime> lastLogin) {
 
     }

@@ -1,17 +1,8 @@
 package org.monospark.remix;
 
-import org.monospark.remix.internal.RecordParameter;
+import org.monospark.remix.internal.WrappedIntImpl;
 
-public final class WrappedInt extends Wrapper {
+public sealed interface WrappedInt permits WrappedIntImpl {
 
-    private int value;
-
-    public WrappedInt(RecordParameter recordParameter, int value) {
-        super(recordParameter);
-        this.value = value;
-    }
-
-    public int get() {
-        return value;
-    }
+    int get();
 }

@@ -1,4 +1,4 @@
-package org.monospark.remix;
+package org.monospark.remix.defaults;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -9,10 +9,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Default {
 
-    public Class<? extends Default.Factory> value();
+    Class<? extends Defaults.Factory> value();
 
-    @FunctionalInterface
-    public static interface Factory {
-        Object create(Class<?> clazz);
-    }
 }

@@ -1,14 +1,11 @@
 package org.monospark.remix;
 
+import org.monospark.remix.internal.MutableBooleanImpl;
+import org.monospark.remix.internal.MutableImpl;
 import org.monospark.remix.internal.RecordParameter;
+import org.monospark.remix.internal.WrappedImpl;
 
-public class Mutable<T> extends Wrapped<T> {
+public sealed interface Mutable<T> extends Wrapped<T> permits MutableImpl {
 
-    Mutable(RecordParameter param, T value) {
-        super(param, value);
-    }
-
-    public void set(T value) {
-        super.value = getRecordParameter().applyActions(value);
-    }
+    public void set(T value);
 }

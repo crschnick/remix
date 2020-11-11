@@ -1,15 +1,8 @@
 package org.monospark.remix;
 
-import org.monospark.remix.internal.RecordParameter;
+import org.monospark.remix.internal.MutableBooleanImpl;
 
-public class MutableBoolean extends WrappedBoolean {
+public sealed interface MutableBoolean permits MutableBooleanImpl {
 
-    MutableBoolean(RecordParameter param, boolean value) {
-        super(param, value);
-    }
-
-    public void set(boolean value) {
-
-        super.value = getRecordParameter().applyActions(value);
-    }
+    void set(boolean value);
 }

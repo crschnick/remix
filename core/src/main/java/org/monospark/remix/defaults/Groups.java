@@ -5,24 +5,33 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A class containing a collection of default value factory implementations to be used with
+ * A class containing a collection of group factory implementations to be used with
  * {@link @Default} annotations.
  **/
-public final class Defaults {
+public final class Groups {
 
-    private Defaults() {}
+    private Groups() {}
+
+    @FunctionalInterface
+    public interface Factory {
+        Object group(Object array);
+    }
 
     private static Map<Class<? extends Factory>, Factory> FACTORY_CACHE = new HashMap<>();
 
     /**
-     * Gets a default value factory from the cache or creates one.
+     * Gets a group factory from the cache or creates one.
      **/
-    public static Factory getFactory(Class<? extends Factory> f) {
+    public static Groups.Factory getFactory(Class<?> f) {
+        if (!Factory.class.isAssignableFrom(f)) {
+            return null;
+        }
+
         Factory cached = FACTORY_CACHE.get(f);
         if (cached == null) {
             try {
                 cached = (Factory) f.getDeclaredConstructors()[0].newInstance();
-                FACTORY_CACHE.put(f, cached);
+                FACTORY_CACHE.put((Class<? extends Factory>) f, cached);
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
@@ -30,24 +39,11 @@ public final class Defaults {
         return cached;
     }
 
-    public interface Factory {
-        Object create(Class<?> clazz);
-    }
-
-    public static final class Now implements Factory {
+    public static final class Array implements Factory {
 
         @Override
-        public Object create(Class<?> clazz) {
-            return null;
+        public Object group(Object args) {
+            return args;
         }
     }
-
-    public static final class Null implements Factory {
-
-        @Override
-        public Object create(Class<?> clazz) {
-            return null;
-        }
-    }
-
 }

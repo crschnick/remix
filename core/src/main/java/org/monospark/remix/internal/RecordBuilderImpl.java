@@ -30,7 +30,7 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
     }
 
     public R build() {
-        return object;
+        return null;
     }
 
 
@@ -75,18 +75,20 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
         return this;
     }
 
+    @SafeVarargs
     @Override
-    public <CT, C extends Collection<CT>, T extends CT> RecordBuilder<R> add(Function<R, CT> variable, T... value) {
+    public final <CT, C extends Collection<CT>, T extends CT> RecordBuilder<R> add(Function<R, CT> variable, T... value) {
         return null;
     }
 
+    @SafeVarargs
     @Override
-    public <CT, C extends Collection<CT>, T extends CT> RecordBuilder<R> add(WrappedFunction<R, C> variable, T... value) {
-        if (!mapping.containsKey(RecordParameter.get(variable.apply(object)))) {
+    public final <CT, C extends Collection<CT>, T extends CT> RecordBuilder<R> add(WrappedFunction<R, C> variable, T... value) {
+        if (!mapping.containsKey(RecordParameter.get(variable.apply(cacheData.getRecordInstance())))) {
             throw new IllegalArgumentException();
         }
 
-        var c = ((Collection<T>) mapping.get(RecordParameter.get(variable.apply(object))));
+        var c = ((Collection<T>) mapping.get(RecordParameter.get(variable.apply(cacheData.getRecordInstance()))));
         Arrays.stream(value).forEach(c::add);
         return this;
     }

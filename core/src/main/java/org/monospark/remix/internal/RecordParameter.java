@@ -56,10 +56,8 @@ public class RecordParameter {
                 .orElse(List.of());
     }
 
-    static DefaultAnnotationType getDefaultValueType(AnnotatedElement p) {
-        return Optional.ofNullable(p.getAnnotation(Default.class))
-                .map(DefaultAnnotationType::new)
-                .orElse(null);
+    static DefaultAnnotationType getDefaultValueType(RecordComponent c) {
+        return DefaultAnnotationType.fromRecordComponent(c);
     }
 
     private static void validate(RecordParameter param) {

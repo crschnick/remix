@@ -16,12 +16,15 @@ public final class RecordResolverData<R extends Record> {
     private R primitiveInstance;
     private Map<RecordParameter, Object> primitiveValueMap;
 
+    private R wrapperInstance;
+
     private List<R> booleanResolveInstances;
     private R learnedObjectsInstance;
 
     private Map<RecordParameter, Object> cachedParameters;
 
-    RecordResolverData(List<RecordParameter> parameters) {
+    RecordResolverData(R defaultInstance, List<RecordParameter> parameters) {
+        this.wrapperInstance = defaultInstance;
         this.parameters = parameters;
         this.cachedParameters = new HashMap<>();
         this.booleanResolveInstances = BooleanResolver.createInstances(parameters);
@@ -32,6 +35,11 @@ public final class RecordResolverData<R extends Record> {
 
     RecordParameter resolveBoolean(Function<R,Boolean> methodRef) {
         return BooleanResolver.resolveParameter(parameters, booleanResolveInstances, methodRef);
+    }
+
+    <T> RecordParameter resolveWrapped(Function<R,?> methodRef) {
+        Object wrapperValue = methodRef.apply(wrapperInstance);
+        return ((Wrapper) wrapperValue).getRecordParameter();
     }
 
     <T> RecordParameter resolve(Function<R,?> methodRef, Supplier<T> valueSupplier) {
@@ -57,7 +65,7 @@ public final class RecordResolverData<R extends Record> {
             return true;
         }
 
-        cachedParameters.put(param, valueSupplier.get());
+        cachedParameters.put(param, param.wrap(valueSupplier.get()));
         R obj = createLearnedObjectsInstance();
         query = methodRef.apply(obj);
         if (query != def && query == cachedParameters.get(param)) {
@@ -105,7 +113,7 @@ public final class RecordResolverData<R extends Record> {
             else if (p.getComponent().getType().isPrimitive()) {
                 values[i] = 0;
             } else {
-                values[i] = null;
+                values[i] = p.defaultValue();
             }
         }
         return (R) Records.createRaw(c, values);

@@ -1,9 +1,6 @@
 package org.monospark.remix;
 
-import org.monospark.remix.internal.DefaultValueHelper;
-import org.monospark.remix.internal.RecordCache;
-import org.monospark.remix.internal.RecordBuilderImpl;
-import org.monospark.remix.internal.RecordParameter;
+import org.monospark.remix.internal.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -16,7 +13,8 @@ public final class Records {
     private Records() {}
 
 
-    private static Object createInternal(Constructor<?> constructor, List<RecordParameter> parameters, Object... args) {
+    private static Object createInternal(Constructor<?> constructor, RecordCacheData<?> data, Object... args) {
+        var parameters = data.getParameters();
         if (args.length > parameters.size()) {
             throw new IllegalArgumentException("Too many arguments");
         }
@@ -24,28 +22,23 @@ public final class Records {
         Object[] newArgs = new Object[parameters.size()];
         for (int i = 0; i < args.length; i++) {
             var p = parameters.get(i);
-            boolean nullCompat = args[i] == null && !p.getType().getValueType().isPrimitive();
-            boolean classCompat = args[i] != null && p.getType().getValueType().isAssignableFrom(args[i].getClass());
-            boolean boxedCompat = args[i] != null && p.getType().getValueType().isPrimitive()
-                    && DefaultValueHelper.getBoxedClass(p.getType().getValueType()).equals(args[i].getClass());
-            boolean compatible = nullCompat || classCompat ||boxedCompat;
-            if (!compatible) {
-                throw new IllegalArgumentException("Incompatible types " +
-                        parameters.get(i).getType().getValueType().getName() + " and " + (args[i] == null ? "null" : args[i].getClass().getName()));
+            Object arg;
+            if (data.getBlank().getValue(p) != null) {
+                arg = data.getBlank().getValue(p).get();
+            } else {
+                boolean nullCompat = args[i] == null && !p.getType().getValueType().isPrimitive();
+                boolean classCompat = args[i] != null && p.getType().getValueType().isAssignableFrom(args[i].getClass());
+                boolean boxedCompat = args[i] != null && p.getType().getValueType().isPrimitive()
+                        && DefaultValueHelper.getBoxedClass(p.getType().getValueType()).equals(args[i].getClass());
+                boolean compatible = nullCompat || classCompat || boxedCompat;
+                if (!compatible) {
+                    throw new IllegalArgumentException("Incompatible types " +
+                            parameters.get(i).getType().getValueType().getName() + " and " + (args[i] == null ? "null" : args[i].getClass().getName()));
+                }
+                arg = args[i];
             }
-            Object afterAction = parameters.get(i).getConstructActions().apply(args[i]);
-            newArgs[i] = p.getType().wrap(parameters.get(i), afterAction);
-        }
-
-        for (int i = args.length; i < parameters.size(); i++) {
-            var d = parameters.get(i).getDefaultValue();
-            if (d == null) {
-                throw new IllegalArgumentException("Missing default value for parameter "
-                        + parameters.get(i).getComponent().getName());
-            }
-            newArgs[i] = parameters.get(i).getType().wrap(
-                    parameters.get(i),
-                    parameters.get(i).getType().defaultValue(parameters.get(i), parameters.get(i).getDefaultValue()));
+            Object afterAction = data.getAssignOperations().getOperator(p);
+            newArgs[i] = p.wrap(afterAction);
         }
 
         try {
@@ -71,14 +64,14 @@ public final class Records {
 
     public static <R extends Record> R create(Class<R> clazz, Object... args) {
         var r = RecordCache.getOrAdd(clazz);
-        return (R) createInternal(r.getConstructor(), r.getParameters(), args);
+        return (R) createInternal(r.getConstructor(), r, args);
     }
 
 
     public static <R extends Record> R createRaw(Class<R> clazz, Object... args) {
         try {
             return (R) clazz.getDeclaredConstructors()[0].newInstance(args);
-        } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException(e);
         }
     }

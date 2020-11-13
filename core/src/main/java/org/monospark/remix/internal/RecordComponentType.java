@@ -1,19 +1,20 @@
 package org.monospark.remix.internal;
 
-import org.monospark.remix.Mutable;
-import org.monospark.remix.WrappedInt;
+import org.monospark.remix.*;
+
+import java.util.Map;
 
 public abstract class RecordComponentType {
 
+    private static final Map<Class<?>, RecordComponentType> TYPES = Map.of(
+            Wrapped.class, new WrappedObjectType(),
+            WrappedBoolean.class, new WrappedBooleanType(),
+            WrappedInt.class, new WrappedIntType(),
+            Mutable.class, new MutableType(),
+            MutableBoolean.class, new MutableBooleanType());
+
     static RecordComponentType create(Class<?> type) {
-        if (type.equals(WrappedImpl.class)) {
-            return new WrappedObjectType();
-        } else if (type.equals(WrappedInt.class)) {
-            return new WrappedIntType();
-        } else if (type.equals(Mutable.class)) {
-            return new MutableType();
-        }
-        return new BareType(type);
+        return TYPES.getOrDefault(type, new BareType(type));
     }
 
 
@@ -23,7 +24,7 @@ public abstract class RecordComponentType {
 
     public abstract Object wrap(RecordParameter param, Object value);
 
-    public abstract Object defaultValue(RecordParameter param, DefaultAnnotationType defaultValue);
+    public abstract Object defaultValue(RecordParameter param);
 
     public abstract Class<?> getValueType();
 
@@ -51,13 +52,68 @@ public abstract class RecordComponentType {
         }
 
         @Override
-        public Object defaultValue(RecordParameter param, DefaultAnnotationType defaultValue) {
-            return defaultValue.defaultObject(param.getComponent().getType());
+        public Object defaultValue(RecordParameter param) {
+            return DefaultValueHelper.createDefaultValue(clazz);
         }
 
         @Override
         public Class<?> getValueType() {
             return clazz;
+        }
+    }
+
+    public static final class WrappedBooleanType extends RecordComponentType {
+
+        @Override
+        boolean isMutable() {
+            return false;
+        }
+
+        @Override
+        boolean isWrapped() {
+            return true;
+        }
+
+        @Override
+        public Object wrap(RecordParameter param, Object value) {
+            return new WrappedBooleanImpl(param, (boolean) value);
+        }
+
+        @Override
+        public Object defaultValue(RecordParameter param) {
+            return new WrappedBooleanImpl(param, false);
+        }
+
+        @Override
+        public Class<?> getValueType() {
+            return boolean.class;
+        }
+    }
+
+    public static final class MutableBooleanType extends RecordComponentType {
+        @Override
+        boolean isMutable() {
+            return true;
+        }
+
+        @Override
+        boolean isWrapped() {
+            return true;
+        }
+
+        @Override
+        public Object wrap(RecordParameter param, Object value) {
+            return new MutableBooleanImpl(param, (boolean) value);
+        }
+
+        @Override
+        public Object defaultValue(RecordParameter param) {
+            return new MutableBooleanImpl(param, false);
+        }
+
+        @Override
+        public Class<?> getValueType() {
+            return boolean.class;
         }
     }
 
@@ -79,13 +135,13 @@ public abstract class RecordComponentType {
         }
 
         @Override
-        public Object defaultValue(RecordParameter param, DefaultAnnotationType defaultValue) {
-            return defaultValue.defaultInt();
+        public Object defaultValue(RecordParameter param) {
+            return new WrappedIntImpl(param, 0);
         }
 
         @Override
         public Class<Integer> getValueType() {
-            return Integer.class;
+            return int.class;
         }
     }
 
@@ -107,8 +163,8 @@ public abstract class RecordComponentType {
         }
 
         @Override
-        public Object defaultValue(RecordParameter param, DefaultAnnotationType defaultValue) {
-            return defaultValue.defaultObject(param.getComponent().getType());
+        public Object defaultValue(RecordParameter param) {
+            return new WrappedImpl<>(param, null);
         }
 
         @Override

@@ -23,15 +23,6 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
         this.cacheData = d;
         this.recordClass = recordClass;
         this.mapping = new HashMap<>();
-        setDefaultValues();
-    }
-
-    private void setDefaultValues() {
-        for (RecordParameter p : cacheData.getParameters()) {
-            if (p.getDefaultValue() != null) {
-                mapping.put(p, p.getType().wrap(p, p.getType().defaultValue(p, p.getDefaultValue())));
-            }
-        }
     }
 
     public R build() {
@@ -41,10 +32,15 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
             if (!mapping.containsKey(p)) {
                 throw new RecordBlankException("Missing value for record component " + p.getComponent().getName());
             }
-            args[i] = mapping.get(p);
+            args[i] = mapping.get(p).get();
             i++;
         }
-        return Records.createRaw(recordClass, args);
+        return Records.create(recordClass, args);
+    }
+
+    @Override
+    public RecordBlank<R> blank() {
+        return new RecordBlankImpl<>(recordClass, mapping);
     }
 
     @Override
@@ -57,36 +53,29 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
     @Override
     public RecordBuilder<R> set(Function<R, Boolean> component, BooleanSupplier value) {
         RecordParameter param = cacheData.getResolverCache().resolveBoolean(component);
-        mapping.put(param, value);
+        mapping.put(param, (Supplier<?>) value);
         return this;
     }
 
     @Override
-    public <T> RecordBuilder<R> set(WrappedFunction<R, T> component, Supplier<T> value) {
-        RecordParameter param = ((WrappedImpl<R>) component.apply(cacheData.getRecordInstance())).getRecordParameter();
-        mapping.put(param, value);
+    public <T> RecordBuilder<R> set(RecordOperations.WrappedPrimitiveFunction<R, T> component, WrappedSupplier<T, Wrapped<T>> value) {
+        RecordParameter param = ((Wrapper) component.get(cacheData.getRecordInstance())).getRecordParameter();
+        mapping.put(param, value::supply);
+        return this;
+    }
+
+
+    @Override
+    public <T> RecordBuilder<R> set(WrappedFunction<R, T> component, WrappedSupplier<T, Wrapped<T>> value) {
+        RecordParameter param = ((Wrapper) component.apply(cacheData.getRecordInstance())).getRecordParameter();
+        mapping.put(param, value::supply);
         return this;
     }
 
     @Override
     public RecordBuilder<R> set(WrappedBooleanFunction<R> component, BooleanSupplier value) {
         RecordParameter param = ((WrappedBooleanImpl) component.apply(cacheData.getRecordInstance())).getRecordParameter();
-        mapping.put(param, value);
-        return this;
-    }
-
-    @SafeVarargs
-    @Override
-    public final <CT, C extends Collection<CT>, T extends CT> RecordBuilder<R> add(Function<R, C> component, Supplier<T>... value) {
-        RecordParameter param = ((WrappedBooleanImpl) component.apply(cacheData.getRecordInstance())).getRecordParameter();
-        Arrays.stream(value).forEach(v -> collectionMapping.get(param).add(v));
-        return this;
-    }
-
-    @Override
-    public <CT, C extends Collection<CT>, T extends CT> RecordBuilder<R> add(WrappedFunction<R, C> component, Supplier<T>... value) {
-        RecordParameter param = ((WrappedBooleanImpl) component.apply(cacheData.getRecordInstance())).getRecordParameter();
-        Arrays.stream(value).forEach(v -> collectionMapping.get(param).add(v));
+        mapping.put(param, value::getAsBoolean);
         return this;
     }
 }

@@ -2,7 +2,7 @@ package org.monospark.remix.internal;
 
 public class Wrapper {
 
-    private RecordParameter recordParameter;
+    protected RecordParameter recordParameter;
 
     Wrapper(RecordParameter recordParameter) {
         this.recordParameter = recordParameter;

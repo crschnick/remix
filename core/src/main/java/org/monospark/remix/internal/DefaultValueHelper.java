@@ -18,7 +18,7 @@ public class DefaultValueHelper {
     }
 
     public static boolean isBoxedClass(Class<?> c) {
-        return DEFAULT_VALUES.values().contains(c);
+        return DEFAULT_VALUES.containsValue(c);
     }
 
     public static Object createDefaultValue(Class<?> clazz) {

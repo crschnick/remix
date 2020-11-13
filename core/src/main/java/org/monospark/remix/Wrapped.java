@@ -2,7 +2,7 @@ package org.monospark.remix;
 
 import org.monospark.remix.internal.WrappedImpl;
 
-public sealed interface Wrapped<T> permits Mutable, WrappedImpl {
+public interface Wrapped<T> {
 
     T get();
 }

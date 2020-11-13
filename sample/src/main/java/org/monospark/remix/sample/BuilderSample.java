@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.IntPredicate;
 
 public class BuilderSample {
 
@@ -32,35 +33,36 @@ public class BuilderSample {
         }
     }
 
-    static class CarRemix extends RecordRemix<Car> {
+    public static class CarRemix extends RecordRemix<Car> {
         @Override
-        protected void blank(RecordBuilder<Car> builder) {
+        public void blank(RecordBuilder<Car> builder) {
             builder.set(Car::manufacturer, () -> "RemixCars");
         }
 
         @Override
-        protected void assign(RecordOperations<Car> operations) {
+        public void assign(RecordOperations<Car> operations) {
             operations.notNull(Car::manufacturer)
                       .notNull(Car::model)
-                      .check(Car::price, p -> p > 0);
+                      .check(Car::price, p -> p > 0)
+                    .check(Car::available, b -> !b);
         }
     }
 
-    class CarDatabaseRemix extends RecordRemix<CarDatabase> {
+    public class CarDatabaseRemix extends RecordRemix<CarDatabase> {
         @Override
-        protected void blank(RecordBuilder<CarDatabase> builder) {
+        public void blank(RecordBuilder<CarDatabase> builder) {
             // The default value for the car list should be an empty array list
             builder.set(CarDatabase::cars, () -> new ArrayList<>());
         }
 
         @Override
-        protected void get(RecordOperations<CarDatabase> ops) {
+        public void get(RecordOperations<CarDatabase> ops) {
             // Return an unmodifiable list view to prevent tampering with the database from outside this instance
             ops.add(CarDatabase::cars, Collections::unmodifiableList);
         }
 
         @Override
-        protected void assign(RecordOperations<CarDatabase> ops) {
+        public void assign(RecordOperations<CarDatabase> ops) {
             // Check for null and make a defensive copy of the list when constructing an instance.
             ops.notNull(CarDatabase::cars)
                .check(CarDatabase::cars, c -> !c.contains(null))
@@ -69,11 +71,11 @@ public class BuilderSample {
     }
 
     @Remix(CarDatabaseRemix.class)
-    record CarDatabase(Wrapped<List<Car>> cars) {}
+    public record CarDatabase(Wrapped<List<Car>> cars) {}
 
 
     @Remix(CarRemix.class)
-    record Car(Wrapped<String> manufacturer, Wrapped<String> model, MutableInt price, MutableBoolean available) {}
+    public static record Car(Wrapped<String> manufacturer, Wrapped<String> model, WrappedInt price, MutableBoolean available) {}
 
 
     public record CarW(String manufacturer, String model, int price, boolean available) {}
@@ -101,13 +103,13 @@ public class BuilderSample {
                 .set(Car::available, () -> true)
                 .build();
 
-        var cs = Records.blank(CarStatus.class)
-                .set(CarStatus::speed,() -> 50)
-                //.set(CarStatus::gear, 2)
-                .set(CarStatus::b1, () -> false)
-                .set(CarStatus::b2, () -> true)
-                .set(CarStatus::b3, () -> false)
-                .build();
+//        var cs = Records.blank(CarStatus.class)
+//                .set(CarStatus::speed,() -> 50)
+//                //.set(CarStatus::gear, 2)
+//                .set(CarStatus::b1, () -> false)
+//                .set(CarStatus::b2, () -> true)
+//                .set(CarStatus::b3, () -> false)
+//                .build();
 
 
         List<Car> cars = new ArrayList<>();

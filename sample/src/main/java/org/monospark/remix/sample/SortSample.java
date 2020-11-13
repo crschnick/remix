@@ -40,8 +40,8 @@ public class SortSample {
         var e3 = Records.create(Event.class, EventType.LOGIN, Instant.parse("2013-03-01T02:15:00Z"));
         var e4 = Records.create(Event.class, EventType.LOGOUT);
 
-        var history = Records.blank(EventHistory.class).set(EventHistory::events, new ArrayList<>())
-                .add(EventHistory::events, e1, e2, e3, e4)
+        var history = Records.builder(EventHistory.class)
+                .set(EventHistory::events, () -> List.of(e1, e2, e3, e4))
                 .build();
 
         assert Records.get(history::events, 0).equals(e1);

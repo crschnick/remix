@@ -12,12 +12,7 @@ public final class MutableBooleanImpl extends WrappedBooleanImpl implements Muta
     }
 
     public void set(boolean value) {
-        if (getRecordParameter().getSetActions() != null) {
-
-            super.value = getRecordParameter().applySetActions(value);
-        } else {
-
             super.value = value;
-        }
+
     }
 }

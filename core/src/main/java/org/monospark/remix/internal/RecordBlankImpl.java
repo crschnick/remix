@@ -20,4 +20,9 @@ public final class RecordBlankImpl<R extends Record> extends RecordBlank<R> {
     protected RecordBuilder<R> builder() {
         return new RecordBuilderImpl<>(recordClass, mapping);
     }
+
+    @Override
+    protected <T> Supplier<T> getValue(RecordParameter p) {
+        return (Supplier<T>) mapping.get(p);
+    }
 }

@@ -1,13 +1,13 @@
 package org.monospark.remix.internal;
 
-import org.monospark.remix.RemixAnnotationException;
+import org.monospark.remix.RemixException;
 import org.monospark.remix.defaults.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.RecordComponent;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 public class DefaultAnnotationType {
@@ -17,23 +17,20 @@ public class DefaultAnnotationType {
     private Object defaultValue;
     private Groups.Factory group;
 
-    private static final List<Class<? extends Annotation>> DEFAULT_ANNOTATIONS =
-            List.of(Default.class, DefaultBoolean.class, DefaultLong.class, DefaultInt.class, DefaultString.class);
-
     static DefaultAnnotationType fromRecordComponent(RecordComponent c) {
         Optional<Annotation> anno = Arrays.stream(c.getAnnotations())
-                .filter(a -> DEFAULT_ANNOTATIONS.contains(a.annotationType()))
+                .filter(a -> RemixAnnotations.DEFAULT_ANNOTATIONS.contains(a.annotationType()))
                 .findFirst();
         if (anno.isPresent()) {
             Annotation annotation = anno.get();
             try {
-                Object array = annotation.annotationType().getField("value").get(annotation);
+                Object array = annotation.annotationType().getMethod("value").invoke(annotation);
                 boolean isGroup = Array.getLength(array) > 1;
 
                 Object defaultValue = array;
                 Groups.Factory group = null;
                 if (isGroup) {
-                    group = Groups.getFactory((Class<?>) annotation.annotationType().getField("group").get(annotation));
+                    group = Groups.getFactory((Class<?>) annotation.annotationType().getMethod("group").invoke(annotation));
                 } else {
                     defaultValue = array;
                 }
@@ -43,8 +40,8 @@ public class DefaultAnnotationType {
                 }
 
                 return new DefaultAnnotationType(annotation, isFactory, defaultValue, group);
-            } catch (IllegalAccessException | NoSuchFieldException e) {
-                throw new RemixAnnotationException(e);
+            } catch (Exception e) {
+                throw new RemixException(e);
             }
         }
         return null;

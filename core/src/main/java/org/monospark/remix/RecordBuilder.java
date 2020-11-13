@@ -3,9 +3,7 @@ package org.monospark.remix;
 import org.monospark.remix.internal.*;
 
 import java.util.Collection;
-import java.util.function.Function;
-import java.util.function.IntFunction;
-import java.util.function.ToIntFunction;
+import java.util.function.*;
 
 public sealed interface RecordBuilder<R extends Record> permits RecordBuilderImpl {
 
@@ -15,27 +13,21 @@ public sealed interface RecordBuilder<R extends Record> permits RecordBuilderImp
     }
 
     @FunctionalInterface
-    interface WrappedIntFunction<R extends Record> {
-        WrappedInt apply(R r);
-    }
-
-    @FunctionalInterface
     interface WrappedBooleanFunction<R extends Record> {
         WrappedBoolean apply(R r);
     }
 
-    public R build();
+    @FunctionalInterface
+    interface WrappedSupplier<W,T extends Wrapped<W>> {
+        W supply();
+    }
 
-    <T> RecordBuilder<R> set(Function<R, T> component, T value);
-    RecordBuilder<R> set(ToIntFunction<R> component, int value);
-    RecordBuilder<R> set(Function<R,Boolean> component, boolean value);
+    R build();
+    RecordBlank<R> blank();
 
+    <T> RecordBuilder<R> set(Function<R, T> component, Supplier<T> value);
+    RecordBuilder<R> set(Function<R,Boolean> component, BooleanSupplier value);
 
-    <T> RecordBuilder<R> set(WrappedFunction<R, T> component, T value);
-    RecordBuilder<R> set(WrappedBooleanFunction<R> component, boolean value);
-    RecordBuilder<R> set(WrappedIntFunction<R> component, int value);
-
-    <CT,C extends Collection<CT>, T extends CT> RecordBuilder<R> add(Function<R, CT> variable, T... value);
-
-    <CT,C extends Collection<CT>, T extends CT> RecordBuilder<R> add(WrappedFunction<R,C> variable, T... value);
+    <T> RecordBuilder<R> set(WrappedFunction<R, T> component, WrappedSupplier<T, Wrapped<T>> value);
+    RecordBuilder<R> set(WrappedBooleanFunction<R> component, BooleanSupplier value);
 }

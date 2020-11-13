@@ -1,98 +1,92 @@
 package org.monospark.remix.internal;
 
-import org.monospark.remix.RecordBuilder;
-import org.monospark.remix.Wrapped;
-import org.monospark.remix.WrappedBoolean;
+import org.monospark.remix.*;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.ToIntFunction;
+import java.util.function.*;
 
 public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<R> {
 
     private Class<R> recordClass;
     private RecordCacheData<R> cacheData;
-    private Map<RecordParameter, Object> mapping;
+    private Map<RecordParameter, Supplier<?>> mapping;
+
+    RecordBuilderImpl(Class<R> recordClass, Map<RecordParameter, Supplier<?>> mapping) {
+        RecordCacheData<R> d = RecordCache.getOrAdd(recordClass);
+        this.cacheData = d;
+        this.recordClass = recordClass;
+        this.mapping = Map.copyOf(mapping);
+    }
 
     public RecordBuilderImpl(Class<R> recordClass) {
         RecordCacheData<R> d = RecordCache.getOrAdd(recordClass);
         this.cacheData = d;
         this.recordClass = recordClass;
         this.mapping = new HashMap<>();
+        setDefaultValues();
     }
 
     private void setDefaultValues() {
         for (RecordParameter p : cacheData.getParameters()) {
             if (p.getDefaultValue() != null) {
-                mapping.put(p, p.getType().wrapDefault(p, p.getDefaultValue()));
+                mapping.put(p, p.getType().wrap(p, p.getType().defaultValue(p, p.getDefaultValue())));
             }
         }
     }
 
     public R build() {
-        return null;
+        Object[] args = new Object[cacheData.getParameters().size()];
+        int i = 0;
+        for (RecordParameter p : cacheData.getParameters()) {
+            if (!mapping.containsKey(p)) {
+                throw new RecordBlankException("Missing value for record component " + p.getComponent().getName());
+            }
+            args[i] = mapping.get(p);
+            i++;
+        }
+        return Records.createRaw(recordClass, args);
     }
 
-
-    public <T> RecordBuilderImpl<R> set(Function<R, T> component, T value) {
-        RecordParameter param = cacheData.getBuilderCache().resolve(component, value);
+    @Override
+    public <T> RecordBuilder<R> set(Function<R, T> component, Supplier<T> value) {
+        RecordParameter param = cacheData.getResolverCache().resolve(component, value);
         mapping.put(param, value);
         return this;
     }
 
     @Override
-    public RecordBuilder<R> set(ToIntFunction<R> component, int value) {
-        RecordParameter param = cacheData.getBuilderCache().resolve(component::applyAsInt, value);
+    public RecordBuilder<R> set(Function<R, Boolean> component, BooleanSupplier value) {
+        RecordParameter param = cacheData.getResolverCache().resolveBoolean(component);
         mapping.put(param, value);
         return this;
     }
 
     @Override
-    public RecordBuilder<R> set(Function<R, Boolean> component, boolean value) {
-        RecordParameter param = cacheData.getBuilderCache().resolveBoolean(component, value);
-        mapping.put(param, value);
-        return this;
-    }
-
-    @Override
-    public <T> RecordBuilder<R> set(WrappedFunction<R, T> component, T value) {
+    public <T> RecordBuilder<R> set(WrappedFunction<R, T> component, Supplier<T> value) {
         RecordParameter param = ((WrappedImpl<R>) component.apply(cacheData.getRecordInstance())).getRecordParameter();
         mapping.put(param, value);
         return this;
     }
 
     @Override
-    public RecordBuilder<R> set(WrappedBooleanFunction<R> component, boolean value) {
+    public RecordBuilder<R> set(WrappedBooleanFunction<R> component, BooleanSupplier value) {
         RecordParameter param = ((WrappedBooleanImpl) component.apply(cacheData.getRecordInstance())).getRecordParameter();
         mapping.put(param, value);
         return this;
     }
 
+    @SafeVarargs
     @Override
-    public RecordBuilder<R> set(WrappedIntFunction<R> component, int value) {
-        RecordParameter param = ((WrappedIntImpl) component.apply(cacheData.getRecordInstance())).getRecordParameter();
-        mapping.put(param, value);
+    public final <CT, C extends Collection<CT>, T extends CT> RecordBuilder<R> add(Function<R, C> component, Supplier<T>... value) {
+        RecordParameter param = ((WrappedBooleanImpl) component.apply(cacheData.getRecordInstance())).getRecordParameter();
+        Arrays.stream(value).forEach(v -> collectionMapping.get(param).add(v));
         return this;
     }
 
-    @SafeVarargs
     @Override
-    public final <CT, C extends Collection<CT>, T extends CT> RecordBuilder<R> add(Function<R, CT> variable, T... value) {
-        return null;
-    }
-
-    @SafeVarargs
-    @Override
-    public final <CT, C extends Collection<CT>, T extends CT> RecordBuilder<R> add(WrappedFunction<R, C> variable, T... value) {
-        if (!mapping.containsKey(RecordParameter.get(variable.apply(cacheData.getRecordInstance())))) {
-            throw new IllegalArgumentException();
-        }
-
-        var c = ((Collection<T>) mapping.get(RecordParameter.get(variable.apply(cacheData.getRecordInstance()))));
-        Arrays.stream(value).forEach(c::add);
+    public <CT, C extends Collection<CT>, T extends CT> RecordBuilder<R> add(WrappedFunction<R, C> component, Supplier<T>... value) {
+        RecordParameter param = ((WrappedBooleanImpl) component.apply(cacheData.getRecordInstance())).getRecordParameter();
+        Arrays.stream(value).forEach(v -> collectionMapping.get(param).add(v));
         return this;
     }
-
-
-
 }

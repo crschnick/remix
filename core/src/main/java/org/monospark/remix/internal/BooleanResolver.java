@@ -6,26 +6,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class BooleanResolver {
+class BooleanResolver {
 
     static <R extends Record> RecordParameter resolveParameter(List<RecordParameter> parameters,
                                                            List<R> instances,
                                                            Function<R,Boolean> methodRef) {
         var c = parameters.get(0).getComponent().getDeclaringRecord();
         for (int i = 0; i < parameters.size(); i++) {
-            if (c.equals(boolean.class)) {
+            var type = parameters.get(i).getComponent().getType();
+            if (type.equals(boolean.class) || type.equals(Boolean.class)) {
                 if (matches(parameters.get(i), instances, methodRef)) {
                     return parameters.get(i);
                 }
             }
         }
-        throw new IllegalArgumentException();
+        throw new IllegalArgumentException("Could not resolve boolean record component, therefore" +
+                "the method reference does not belong to the associated record class.");
     }
 
     private static <R extends Record> boolean matches(RecordParameter parameter, List<R> instances, Function<R,Boolean> methodRef) {
         for (R r : instances) {
             try {
-                if (methodRef.apply(r) != parameter.getComponent().getAccessor().invoke(r)) {
+                var query = methodRef.apply(r);
+                var shouldBe = parameter.getComponent().getAccessor().invoke(r);
+                if (!query.equals(shouldBe)) {
                     return false;
                 }
             } catch (IllegalAccessException e) {
@@ -38,11 +42,14 @@ public class BooleanResolver {
     }
 
     static <R extends Record> List<R> createInstances(List<RecordParameter> parameters) {
-        long booleans = parameters.stream().filter(p -> p.getComponent().getType().equals(boolean.class)).count();
-        int neededInstances = (int) Math.ceil(Math.log(booleans) / Math.log(2));
+        long booleans = parameters.stream()
+                .filter(p -> p.getComponent().getType().equals(boolean.class)
+                        || p.getComponent().getType().equals(Boolean.class))
+                .count();
+        int neededInstances = (int) booleans;
         List<R> list = new ArrayList<>(neededInstances);
         for (int i = 0; i < neededInstances; i++) {
-            list.set(i, createValue(parameters, i));
+            list.add(createValue(parameters, i));
         }
         return list;
     }
@@ -52,11 +59,12 @@ public class BooleanResolver {
         int booleans = 0;
         var c = parameters.get(0).getComponent().getDeclaringRecord();
         for (int i = 0; i < parameters.size(); i++) {
-            if (parameters.get(i).getComponent().getDeclaringRecord().equals(boolean.class)) {
-                values[i] = (value & (1 << booleans)) == 1;
+            Class<?> type = parameters.get(i).getComponent().getType();
+            if (type.equals(boolean.class) || type.equals(Boolean.class)) {
+                values[i] = booleans == value;
                 booleans++;
             } else {
-                values[i] = DefaultValueHelper.createDefaultValue(c);
+                values[i] = DefaultValueHelper.createDefaultValue(parameters.get(i).getComponent().getType());
             }
         }
         try {

@@ -8,12 +8,20 @@ import static java.util.stream.Collectors.toMap;
 
 public class DefaultValueHelper {
 
-    private static final Map<Class<?>, Object> DEFAULT_VALUES = Stream
+    private static final Map<Class<?>, Class<?>> DEFAULT_VALUES = Stream
             .of(boolean.class, byte.class, char.class, double.class, float.class, int.class, long.class, short.class)
-            .collect(toMap(clazz -> Array.get(Array.newInstance(clazz, 1), 0).getClass(),
-                    clazz -> Array.get(Array.newInstance(clazz, 1), 0)));
+            .collect(toMap(clazz -> clazz,
+                    clazz -> Array.get(Array.newInstance(clazz, 1), 0).getClass()));
 
-    static Object createDefaultValue(Class<?> clazz) {
+    public static Class<?> getBoxedClass(Class<?> primitive) {
+        return DEFAULT_VALUES.get(primitive);
+    }
+
+    public static boolean isBoxedClass(Class<?> c) {
+        return DEFAULT_VALUES.values().contains(c);
+    }
+
+    public static Object createDefaultValue(Class<?> clazz) {
         return Array.get(Array.newInstance(clazz, 1), 0);
     }
 

@@ -76,7 +76,7 @@ public class BibliographySample {
         System.out.println(bib);
 
         var remixBib = Records.builder(BibliographyRemix.class)
-                .set(BibliographyRemix::entries, new ArrayList<>())
+                .set(BibliographyRemix::entries, ArrayList::new)
                 .add(BibliographyRemix::entries,
                         Records.create(BibliographyEntryRemix.class, List.of("test"), "test"))
                 .build();

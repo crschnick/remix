@@ -15,7 +15,7 @@ tasks.withType(JavaCompile) {
 
 application {
     mainModule = 'org.monospark.remix.sample'
-    mainClass = 'org.monospark.remix.sample.BibliographySample'
+    mainClass = 'org.monospark.remix.sample.BuilderSample'
     applicationDefaultJvmArgs = ["--enable-preview"]
 }
 

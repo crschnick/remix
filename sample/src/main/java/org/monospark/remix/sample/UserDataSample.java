@@ -1,10 +1,9 @@
 package org.monospark.remix.sample;
 
 import org.monospark.remix.*;
-import org.monospark.remix.actions.Actions;
-import org.monospark.remix.actions.Get;
 import org.monospark.remix.defaults.*;
 
+import java.lang.invoke.MethodHandle;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -38,8 +37,9 @@ public class UserDataSample {
     }
 
     public static void onLoginRemix() {
-        UserDataRemix d = Records.builder(UserDataRemix.class).set(UserDataRemix::online, false).build();
+        UserDataRemix d = Records.blank(UserDataRemix.class).set(UserDataRemix::online, false).build();
         Records.set(d::online, true);
         Records.set(d::lastLogin, LocalDateTime.now());
+        MethodHandle h;
     }
 }

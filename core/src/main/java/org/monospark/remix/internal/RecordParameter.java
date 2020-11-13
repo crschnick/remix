@@ -11,18 +11,20 @@ import java.lang.reflect.RecordComponent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 public class RecordParameter {
 
     private RecordComponent component;
-    private RecordComponentType<?> type;
+    private RecordComponentType type;
     private DefaultAnnotationType defaultValue;
-    private List<Action> constructActions;
-    private List<Action> setActions;
-    private List<Action> getActions;
+    private UnaryOperator<Object> constructActions;
+    private UnaryOperator<Object> setActions;
+    private UnaryOperator<Object> getActions;
 
-    public RecordParameter(RecordComponent component, RecordComponentType type, DefaultAnnotationType defaultValue, List<Action> constructActions, List<Action> setActions, List<Action> getActions) {
+    public RecordParameter(RecordComponent component, RecordComponentType type, DefaultAnnotationType defaultValue,
+                           UnaryOperator<Object> constructActions, UnaryOperator<Object> setActions, UnaryOperator<Object> getActions) {
         this.component = component;
         this.type = type;
         this.defaultValue = defaultValue;
@@ -60,12 +62,12 @@ public class RecordParameter {
         return DefaultAnnotationType.fromRecordComponent(c);
     }
 
-    private static void validate(RecordParameter param) {
-        if (!param.getType().isWrapped()) {
-            if (param.isMutable()) {
+    private void validate() {
+        if (!getType().isWrapped()) {
+            if (isMutable()) {
                 throw new IllegalArgumentException();
             }
-            if (param.getConstructActions().size() > 0 || param.getSetActions().size() > 0 ||param.getGetActions().size() > 0) {
+            if (constructActions != null || setActions != null || getActions != null) {
                 throw new IllegalArgumentException();
             }
         }
@@ -77,9 +79,9 @@ public class RecordParameter {
                     RecordComponent component = comp;
                     RecordComponentType type = RecordComponentType.create(comp.getType());
                     DefaultAnnotationType defaultValue = getDefaultValueType(comp);
-                    List<Action> constructActions = mapConstructActions(comp);
-                    List<Action> setActions = mapSetActions(comp);
-                    List<Action> getActions = mapGetActions(comp);
+                    UnaryOperator<Object> constructActions = mapConstructActions(comp);
+                    UnaryOperator<Object> setActions = mapSetActions(comp);
+                    UnaryOperator<Object> getActions = mapGetActions(comp);
                     return new RecordParameter(component, type, defaultValue, constructActions, setActions, getActions);
                 })
                 .collect(Collectors.toList());
@@ -92,15 +94,15 @@ public class RecordParameter {
     }
 
     public <T> T applyGetActions(T value) {
-        return Actions.executeActions(value, getActions);
+        return (T) getActions.apply(value);
     }
 
     public <T> T applySetActions(T value) {
-        return Actions.executeActions(value, setActions);
+        return (T) setActions.apply(value);
     }
 
     public <T> T applyConstructActions(T value) {
-        return Actions.executeActions(value, constructActions);
+        return (T) constructActions.apply(value);
     }
 
     public <T extends Record> Class<T> getRecord() {
@@ -121,17 +123,5 @@ public class RecordParameter {
 
     public DefaultAnnotationType getDefaultValue() {
         return defaultValue;
-    }
-
-    public List<Action> getConstructActions() {
-        return constructActions;
-    }
-
-    public List<Action> getSetActions() {
-        return setActions;
-    }
-
-    public List<Action> getGetActions() {
-        return getActions;
     }
 }

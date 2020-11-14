@@ -1,7 +1,6 @@
 package org.monospark.remix.internal;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -9,8 +8,8 @@ import java.util.function.Function;
 class BooleanResolver {
 
     static <R extends Record> RecordParameter resolveParameter(List<RecordParameter> parameters,
-                                                           List<R> instances,
-                                                           Function<R,Boolean> methodRef) {
+                                                               List<R> instances,
+                                                               Function<R, Boolean> methodRef) {
         var c = parameters.get(0).getComponent().getDeclaringRecord();
         for (int i = 0; i < parameters.size(); i++) {
             var type = parameters.get(i).getComponent().getType();
@@ -24,7 +23,7 @@ class BooleanResolver {
                 "the method reference does not belong to the associated record class.");
     }
 
-    private static <R extends Record> boolean matches(RecordParameter parameter, List<R> instances, Function<R,Boolean> methodRef) {
+    private static <R extends Record> boolean matches(RecordParameter parameter, List<R> instances, Function<R, Boolean> methodRef) {
         for (R r : instances) {
             try {
                 var query = methodRef.apply(r);
@@ -64,7 +63,7 @@ class BooleanResolver {
                 values[i] = booleans == value;
                 booleans++;
             } else {
-                values[i] = DefaultValueHelper.createDefaultValue(parameters.get(i).getComponent().getType());
+                values[i] = parameters.get(i).defaultValue();
             }
         }
         try {

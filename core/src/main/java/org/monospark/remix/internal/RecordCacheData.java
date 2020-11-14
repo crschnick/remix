@@ -3,28 +3,42 @@ package org.monospark.remix.internal;
 import org.monospark.remix.*;
 
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
 import java.util.List;
 
 public class RecordCacheData<T extends Record> {
+
+    private RecordRemix<T> remix;
+    private T recordInstance;
+    private RecordBlank<T> blank;
+    private Constructor<T> constructor;
+    private List<RecordParameter> parameters;
+    private RecordResolverData<T> resolverCache;
+    private RecordOperationsImpl<T> getOperations;
+    private RecordOperationsImpl<T> assignOperations;
+    private RecordOperationsImpl<T> setOperations;
+    private RecordOperationsImpl<T> copyOperations;
+    public RecordCacheData(RecordRemix<T> remix, Constructor<T> constructor,
+                           List<RecordParameter> parameters, RecordOperationsImpl<T> getOperations,
+                           RecordOperationsImpl<T> assignOperations, RecordOperationsImpl<T> setOperations,
+                           RecordOperationsImpl<T> copyOperations) {
+        this.remix = remix;
+        this.constructor = constructor;
+        this.parameters = parameters;
+        this.recordInstance = defaultRecordInstance(constructor, parameters);
+        this.resolverCache = new RecordResolverData<T>(recordInstance, parameters);
+        this.getOperations = getOperations;
+        this.assignOperations = assignOperations;
+        this.setOperations = setOperations;
+        this.copyOperations = copyOperations;
+    }
 
     private static boolean hasRemixAnnotation(Class<? extends Record> recordClass) {
         return recordClass.getAnnotationsByType(Remix.class).length > 0;
     }
 
-    private static boolean hasOnlyGeneratedConstructor(Class<? extends Record> recordClass) {
-        if (recordClass.getDeclaredConstructors().length > 1) {
-            return false;
-        }
-
-        return Arrays.stream(recordClass.getDeclaredConstructors()[0].getParameters())
-                .anyMatch(p -> Arrays.stream(p.getAnnotations())
-                        .anyMatch(a -> RemixAnnotations.ALL_ANNOTATIONS.contains(a.annotationType())));
-    }
-
     private static <R extends Record, T extends RecordRemix<R>> RecordBlank<R> createBlank(Class<R> recordClass) {
         Class<T> clazz = (Class<T>) recordClass.getAnnotation(Remix.class).value();
-        RecordRemix<R> remix = RemixCache.getRecordRemix((Class<T>) recordClass.getAnnotation(Remix.class).value());
+        RecordRemix<R> remix = RecordRemixCache.getRecordRemix((Class<T>) recordClass.getAnnotation(Remix.class).value());
         RecordBuilder<R> blank = new RecordBuilderImpl<R>(recordClass);
         remix.blank(blank);
         return blank.blank();
@@ -32,11 +46,12 @@ public class RecordCacheData<T extends Record> {
 
     static <R extends Record, T extends RecordRemix<R>> RecordCacheData<R> fromRecordClass(Class<R> recordClass) {
         Class<T> clazz = (Class<T>) recordClass.getAnnotation(Remix.class).value();
-        RecordRemix<R> remix = RemixCache.getRecordRemix(clazz);
+        RecordRemix<R> remix = RecordRemixCache.getRecordRemix(clazz);
 
-        var get = new OperationsCache<>(recordClass);
-        var set = new OperationsCache<>(recordClass);
-        var assign = new OperationsCache<>(recordClass);
+        var get = new RecordOperationsImpl<>(recordClass);
+        var set = new RecordOperationsImpl<>(recordClass);
+        var assign = new RecordOperationsImpl<>(recordClass);
+        var copy = new RecordOperationsImpl<>(recordClass);
 
 
         if (hasRemixAnnotation(recordClass)) {
@@ -47,33 +62,11 @@ public class RecordCacheData<T extends Record> {
             remix.get(get);
             remix.set(set);
             remix.assign(assign);
+            remix.copy(copy);
         }
 
-        return new RecordCacheData<R>(remix,  (Constructor<R>) recordClass.getDeclaredConstructors()[0],
-                RecordParameter.fromRecordComponents(recordClass), get, assign, set);
-    }
-
-    private RecordRemix<T> remix;
-    private T recordInstance;
-    private RecordBlank<T> blank;
-    private Constructor<T> constructor;
-    private List<RecordParameter> parameters;
-    private RecordResolverData<T> resolverCache;
-    private OperationsCache<T> getOperations;
-    private OperationsCache<T> assignOperations;
-    private OperationsCache<T> setOperations;
-
-    public RecordCacheData(RecordRemix<T> remix, Constructor<T> constructor,
-                           List<RecordParameter> parameters, OperationsCache<T> getOperations,
-                           OperationsCache<T> assignOperations, OperationsCache<T> setOperations) {
-        this.remix = remix;
-        this.constructor = constructor;
-        this.parameters = parameters;
-        this.recordInstance = defaultRecordInstance(constructor, parameters);
-        this.resolverCache = new RecordResolverData<T>(recordInstance, parameters);
-        this.getOperations = getOperations;
-        this.assignOperations = assignOperations;
-        this.setOperations = setOperations;
+        return new RecordCacheData<R>(remix, (Constructor<R>) recordClass.getDeclaredConstructors()[0],
+                RecordParameter.fromRecordComponents(recordClass), get, assign, set, copy);
     }
 
     static <T extends Record> T defaultRecordInstance(Constructor<T> constructor, List<RecordParameter> parameters) {
@@ -110,15 +103,19 @@ public class RecordCacheData<T extends Record> {
         return constructor;
     }
 
-    public OperationsCache<T> getGetOperations() {
+    public RecordOperationsImpl<T> getGetOperations() {
         return getOperations;
     }
 
-    public OperationsCache<T> getAssignOperations() {
+    public RecordOperationsImpl<T> getAssignOperations() {
         return assignOperations;
     }
 
-    public OperationsCache<T> getSetOperations() {
+    public RecordOperationsImpl<T> getSetOperations() {
         return setOperations;
+    }
+
+    public RecordOperationsImpl<T> getCopyOperations() {
+        return copyOperations;
     }
 }

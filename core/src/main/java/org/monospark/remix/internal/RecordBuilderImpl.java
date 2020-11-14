@@ -2,8 +2,11 @@ package org.monospark.remix.internal;
 
 import org.monospark.remix.*;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BooleanSupplier;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<R> {
 
@@ -15,7 +18,7 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
         RecordCacheData<R> d = RecordCache.getOrAdd(recordClass);
         this.cacheData = d;
         this.recordClass = recordClass;
-        this.mapping = Map.copyOf(mapping);
+        this.mapping = new HashMap<>(mapping);
     }
 
     public RecordBuilderImpl(Class<R> recordClass) {
@@ -30,7 +33,7 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
         int i = 0;
         for (RecordParameter p : cacheData.getParameters()) {
             if (!mapping.containsKey(p)) {
-                throw new RecordBlankException("Missing value for record component " + p.getComponent().getName());
+                throw new RecordBuilderException("Missing value for record component " + p.getComponent().getName());
             }
             args[i] = mapping.get(p).get();
             i++;
@@ -56,14 +59,6 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
         mapping.put(param, (Supplier<?>) value);
         return this;
     }
-
-    @Override
-    public <T> RecordBuilder<R> set(RecordOperations.WrappedPrimitiveFunction<R, T> component, WrappedSupplier<T, Wrapped<T>> value) {
-        RecordParameter param = ((Wrapper) component.get(cacheData.getRecordInstance())).getRecordParameter();
-        mapping.put(param, value::supply);
-        return this;
-    }
-
 
     @Override
     public <T> RecordBuilder<R> set(WrappedFunction<R, T> component, WrappedSupplier<T, Wrapped<T>> value) {

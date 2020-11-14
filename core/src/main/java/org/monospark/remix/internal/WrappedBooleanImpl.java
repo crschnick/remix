@@ -1,9 +1,8 @@
 package org.monospark.remix.internal;
 
-import org.monospark.remix.MutableBoolean;
-import org.monospark.remix.Wrapped;
 import org.monospark.remix.WrappedBoolean;
-import org.monospark.remix.internal.RecordParameter;
+
+import java.util.Objects;
 
 public sealed class WrappedBooleanImpl extends Wrapper implements WrappedBoolean permits MutableBooleanImpl {
 
@@ -14,12 +13,31 @@ public sealed class WrappedBooleanImpl extends Wrapper implements WrappedBoolean
         this.value = value;
     }
 
-    public boolean get() {
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        WrappedBooleanImpl that = (WrappedBooleanImpl) o;
+        return value == that.value;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
+    }
+
+    @Override
+    public String toString() {
+        return Boolean.toString(value);
+    }
+
+    @Override
+    public boolean getBoolean() {
         return value;
     }
 
     @Override
-    public Wrapped<Boolean> convert() {
-        return new WrappedImpl<>(getRecordParameter(), value);
+    public Boolean get() {
+        return value;
     }
 }

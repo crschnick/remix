@@ -1,9 +1,6 @@
 package org.monospark.remix.internal;
 
 import org.monospark.remix.MutableBoolean;
-import org.monospark.remix.WrappedBoolean;
-import org.monospark.remix.internal.RecordParameter;
-import org.monospark.remix.internal.WrappedBooleanImpl;
 
 public final class MutableBooleanImpl extends WrappedBooleanImpl implements MutableBoolean {
 
@@ -12,7 +9,7 @@ public final class MutableBooleanImpl extends WrappedBooleanImpl implements Muta
     }
 
     public void set(boolean value) {
-            super.value = value;
+        super.value = value;
 
     }
 }

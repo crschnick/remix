@@ -1,8 +1,10 @@
 package org.monospark.remix.internal;
 
-import org.monospark.remix.Wrapped;
 import org.monospark.remix.WrappedInt;
 
+import java.io.IOException;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.Objects;
 
 public final class WrappedIntImpl extends Wrapper implements WrappedInt {
@@ -15,16 +17,34 @@ public final class WrappedIntImpl extends Wrapper implements WrappedInt {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        WrappedIntImpl that = (WrappedIntImpl) o;
+        return value == that.value;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hash(value);
     }
 
-    public int get() {
+    @Override
+    public int getInt() {
+        var ops = getRecordParameter().getGetOperation();
+        if (ops != null) {
+            return (int) getRecordParameter().getGetOperation().apply(value);
+        }
         return value;
     }
 
     @Override
-    public Wrapped<Integer> convert() {
-        return new WrappedImpl<>(getRecordParameter(), value);
+    public Integer get() {
+        return getInt();
     }
 }

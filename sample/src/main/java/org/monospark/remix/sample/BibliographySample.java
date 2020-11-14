@@ -1,18 +1,27 @@
 package org.monospark.remix.sample;
 
-import static org.monospark.remix.actions.Actions.*;
-
-import org.monospark.remix.Wrapped;
-import org.monospark.remix.actions.Assign;
 import org.monospark.remix.Records;
-import org.monospark.remix.defaults.Default;
-import static org.monospark.remix.defaults.Defaults.*;
+import org.monospark.remix.Wrapped;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public class BibliographySample {
 
-    public static record BibliographyEntry(List<String> authors, String title, String sourceInformation, String citingInformation) {
+    public static void main(String[] args) {
+        var bib = new Bibliography.Builder().add(new BibliographyEntry(List.of("test"), "test")).build();
+        System.out.println(bib);
+
+        var remixBib = Records.builder(BibliographyRemix.class)
+                .set(BibliographyRemix::entries, () -> List.of(
+                        Records.create(BibliographyEntryRemix.class, List.of("test"), "test")))
+                .build();
+    }
+
+    public static record BibliographyEntry(List<String> authors, String title, String sourceInformation,
+                                           String citingInformation) {
 
         public BibliographyEntry(List<String> authors, String title) {
             this(authors, title, null);
@@ -55,30 +64,17 @@ public class BibliographySample {
     }
 
     public static record BibliographyEntryRemix(
-            @Default(Null.class)
             Wrapped<List<String>> authors,
 
-            @Assign(NotNull.class)
             Wrapped<String> title,
 
-            @Default(Null.class)
             Wrapped<String> sourceInformation,
 
-            @Default(Null.class)
-            Wrapped<String> citingInformation) {}
+            Wrapped<String> citingInformation) {
+    }
 
     public static record BibliographyRemix(
-            @Assign({NotNull.class, Unmodifiable.class})
-            Wrapped<List<BibliographyEntryRemix>> entries) {}
-
-    public static void main(String[] args) {
-        var bib = new Bibliography.Builder().add(new BibliographyEntry(List.of("test"), "test")).build();
-        System.out.println(bib);
-
-        var remixBib = Records.builder(BibliographyRemix.class)
-                .set(BibliographyRemix::entries, () -> List.of(
-                        Records.create(BibliographyEntryRemix.class, List.of("test"), "test")))
-                .build();
+            Wrapped<List<BibliographyEntryRemix>> entries) {
     }
 
 }

@@ -3,14 +3,14 @@ package org.monospark.remix;
 import org.monospark.remix.internal.*;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class Records {
 
-    private Records() {}
+    private Records() {
+    }
 
 
     private static Object createInternal(Constructor<?> constructor, RecordCacheData<?> data, Object... args) {
@@ -37,7 +37,8 @@ public final class Records {
                 }
                 arg = args[i];
             }
-            Object afterAction = data.getAssignOperations().getOperator(p);
+            var op = data.getAssignOperations().getOperator(p);
+            Object afterAction = op != null ? op.apply(arg) : arg;
             newArgs[i] = p.wrap(afterAction);
         }
 
@@ -57,11 +58,6 @@ public final class Records {
         return blank.builder();
     }
 
-    public static <R extends Record> RecordBuilder<R> builderWith(R object) {
-        return null;
-    }
-
-
     public static <R extends Record> R create(Class<R> clazz, Object... args) {
         var r = RecordCache.getOrAdd(clazz);
         return (R) createInternal(r.getConstructor(), r, args);
@@ -76,12 +72,52 @@ public final class Records {
         }
     }
 
+    public static <R extends Record> R fromArray(Class<R> clazz, Object[] values) {
+        var r = RecordCache.getOrAdd(clazz);
+        int i = 0;
+        Object[] newArgs = new Object[values.length];
+        for (var p : r.getParameters()) {
+            newArgs[i] = p.wrap(values[i]);
+            i++;
+        }
+        return createRaw(clazz, newArgs);
+    }
+
+    public static <R extends Record> Object[] toArray(R src) {
+        var r = RecordCache.getOrAdd(src.getClass());
+        Object[] out = new Object[r.getParameters().size()];
+        int i = 0;
+        for (var p : r.getParameters()) {
+            out[i] = p.unwrap(p.getValue(src));
+            i++;
+        }
+        return out;
+    }
+
+    public static <R extends Record> SerializedRecord serialized(R obj) {
+        Class<R> clazz = (Class<R>) obj.getClass();
+        if (!clazz.isRecord()) {
+            throw new RemixException("Class " + clazz.getName() + " is not a record");
+        }
+        return new SerializedRecord(clazz.getName(), Records.toArray(obj));
+    }
+
+    private static <R extends Record> Object[] copyValues(R src) {
+        var r = RecordCache.getOrAdd(src.getClass());
+        Object[] args = toArray(src);
+        int i = 0;
+        for (var p : r.getParameters()) {
+            args[i] = r.getCopyOperations().getOperator(p).apply(args[i]);
+            i++;
+        }
+        return args;
+    }
     public static <R extends Record> R copy(R src) {
-        return null;
+        return fromArray((Class<R>) src.getClass(), copyValues(src));
     }
 
     public static <D extends Record, S extends Record> D structuralCopy(Class<D> destClass, S src) {
-        return null;
+        return fromArray(destClass, copyValues(src));
     }
 
     public static <T> T get(Wrapped<T> entry) {

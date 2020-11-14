@@ -13,7 +13,7 @@ public abstract class RecordComponentType {
             Mutable.class, new MutableType(),
             MutableBoolean.class, new MutableBooleanType());
 
-    static RecordComponentType create(Class<?> type) {
+    static RecordComponentType get(Class<?> type) {
         return TYPES.getOrDefault(type, new BareType(type));
     }
 
@@ -23,6 +23,8 @@ public abstract class RecordComponentType {
     abstract boolean isWrapped();
 
     public abstract Object wrap(RecordParameter param, Object value);
+
+    public abstract Object unwrap(Object value);
 
     public abstract Object defaultValue(RecordParameter param);
 
@@ -52,6 +54,11 @@ public abstract class RecordComponentType {
         }
 
         @Override
+        public Object unwrap(Object value) {
+            return value;
+        }
+
+        @Override
         public Object defaultValue(RecordParameter param) {
             return DefaultValueHelper.createDefaultValue(clazz);
         }
@@ -62,7 +69,7 @@ public abstract class RecordComponentType {
         }
     }
 
-    public static final class WrappedBooleanType extends RecordComponentType {
+    public static class WrappedBooleanType extends RecordComponentType {
 
         @Override
         boolean isMutable() {
@@ -80,6 +87,11 @@ public abstract class RecordComponentType {
         }
 
         @Override
+        public Object unwrap(Object value) {
+            return ((WrappedBooleanImpl) value).value;
+        }
+
+        @Override
         public Object defaultValue(RecordParameter param) {
             return new WrappedBooleanImpl(param, false);
         }
@@ -90,14 +102,9 @@ public abstract class RecordComponentType {
         }
     }
 
-    public static final class MutableBooleanType extends RecordComponentType {
+    public static final class MutableBooleanType extends WrappedBooleanType {
         @Override
         boolean isMutable() {
-            return true;
-        }
-
-        @Override
-        boolean isWrapped() {
             return true;
         }
 
@@ -109,11 +116,6 @@ public abstract class RecordComponentType {
         @Override
         public Object defaultValue(RecordParameter param) {
             return new MutableBooleanImpl(param, false);
-        }
-
-        @Override
-        public Class<?> getValueType() {
-            return boolean.class;
         }
     }
 
@@ -127,6 +129,11 @@ public abstract class RecordComponentType {
         @Override
         boolean isWrapped() {
             return true;
+        }
+
+        @Override
+        public Object unwrap(Object value) {
+            return ((WrappedIntImpl) value).getInt();
         }
 
         @Override
@@ -155,6 +162,11 @@ public abstract class RecordComponentType {
         @Override
         boolean isWrapped() {
             return true;
+        }
+
+        @Override
+        public Object unwrap(Object value) {
+            return ((WrappedImpl<?>) value).get();
         }
 
         @Override

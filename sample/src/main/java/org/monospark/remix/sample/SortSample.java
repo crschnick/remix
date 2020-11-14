@@ -2,37 +2,12 @@ package org.monospark.remix.sample;
 
 import org.monospark.remix.Records;
 import org.monospark.remix.Wrapped;
-import org.monospark.remix.actions.Assign;
-import org.monospark.remix.defaults.Default;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-
-import static org.monospark.remix.actions.Actions.*;
-import static org.monospark.remix.defaults.Defaults.Now;
 
 
 public class SortSample {
-
-    public enum EventType {REGISTER, LOGIN, LOGOUT}
-
-    public record Event(
-            @Assign(NotNull.class)
-            Wrapped<EventType> type,
-
-            @Assign(NotNull.class)
-            @Default(Now.class)
-            Wrapped<Instant> timestamp)
-            implements Comparable<Event> {
-        @Override
-        public int compareTo(Event o) {
-            return timestamp.get().compareTo(o.timestamp.get());
-        }
-    }
-
-    public record EventHistory(@Assign({Copy.class, Sort.class}) Wrapped<List<Event>> events) {
-    }
 
     public static void checkOrdering() {
         var e1 = Records.create(Event.class, EventType.REGISTER, Instant.parse("2013-03-01T01:01:00Z"));
@@ -48,5 +23,21 @@ public class SortSample {
         assert Records.get(history::events, 1).equals(e3);
         assert Records.get(history::events, 2).equals(e2);
         assert Records.get(history::events, 3).equals(e4);
+    }
+
+    public enum EventType {REGISTER, LOGIN, LOGOUT}
+
+    public record Event(
+            Wrapped<EventType> type,
+
+            Wrapped<Instant> timestamp)
+            implements Comparable<Event> {
+        @Override
+        public int compareTo(Event o) {
+            return timestamp.get().compareTo(o.timestamp.get());
+        }
+    }
+
+    public record EventHistory(Wrapped<List<Event>> events) {
     }
 }

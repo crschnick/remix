@@ -62,14 +62,14 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
 
     @Override
     public <T> RecordBuilder<R> set(WrappedFunction<R, T> component, WrappedSupplier<T, Wrapped<T>> value) {
-        RecordParameter param = ((Wrapper) component.apply(cacheData.getRecordInstance())).getRecordParameter();
+        RecordParameter param = cacheData.getResolverCache().resolveWrapped(component);
         mapping.put(param, value::supply);
         return this;
     }
 
     @Override
     public RecordBuilder<R> set(WrappedBooleanFunction<R> component, BooleanSupplier value) {
-        RecordParameter param = ((WrappedBooleanImpl) component.apply(cacheData.getRecordInstance())).getRecordParameter();
+        RecordParameter param = cacheData.getResolverCache().resolveWrapped(component);
         mapping.put(param, value::getAsBoolean);
         return this;
     }

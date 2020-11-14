@@ -2,6 +2,7 @@ package org.monospark.remix.internal;
 
 import org.monospark.remix.RecordRemix;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +15,9 @@ public class RecordRemixCache {
         if (!CACHE.containsKey(r)) {
             try {
                 var c = r.getConstructors();
-                CACHE.put(r, (RecordRemix<? extends Record>) r.getDeclaredConstructors()[0].newInstance());
+                Constructor<T> con = (Constructor<T>) r.getDeclaredConstructors()[0];
+                con.setAccessible(true);
+                CACHE.put(r, con.newInstance());
             } catch (Exception e) {
                 e.printStackTrace();
             }

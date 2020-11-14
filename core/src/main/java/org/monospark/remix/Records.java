@@ -20,10 +20,14 @@ public final class Records {
         }
 
         Object[] newArgs = new Object[parameters.size()];
-        for (int i = 0; i < args.length; i++) {
+        for (int i = 0; i < data.getParameters().size(); i++) {
             var p = parameters.get(i);
             Object arg;
-            if (data.getBlank().getValue(p) != null) {
+            if (i > args.length) {
+                if (data.getBlank().getValue(p) == null) {
+                    throw new IllegalArgumentException("Missing value for component "
+                            + parameters.get(i).getComponent().getName());
+                }
                 arg = data.getBlank().getValue(p).get();
             } else {
                 boolean nullCompat = args[i] == null && !p.getType().getValueType().isPrimitive();
@@ -37,9 +41,13 @@ public final class Records {
                 }
                 arg = args[i];
             }
-            var op = data.getAssignOperations().getOperator(p);
-            Object afterAction = op != null ? op.apply(arg) : arg;
-            newArgs[i] = p.wrap(afterAction);
+            try {
+                var op = data.getAssignOperations().getOperator(p);
+                Object afterAction = op != null ? op.apply(arg) : arg;
+                newArgs[i] = p.wrap(afterAction);
+            } catch (Exception e) {
+                int a = 0;
+            }
         }
 
         try {
@@ -66,7 +74,7 @@ public final class Records {
 
     public static <R extends Record> R createRaw(Class<R> clazz, Object... args) {
         try {
-            return (R) clazz.getDeclaredConstructors()[0].newInstance(args);
+            return RecordCache.getOrAdd(clazz).getConstructor().newInstance(args);
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
         }
@@ -107,7 +115,9 @@ public final class Records {
         Object[] args = toArray(src);
         int i = 0;
         for (var p : r.getParameters()) {
-            args[i] = r.getCopyOperations().getOperator(p).apply(args[i]);
+            if (r.getCopyOperations().getOperator(p) != null) {
+                args[i] = r.getCopyOperations().getOperator(p).apply(args[i]);
+            }
             i++;
         }
         return args;

@@ -57,6 +57,7 @@ public final class RecordParameter implements Serializable {
 
     public Object getValue(Object instance) {
         try {
+            getComponent().getAccessor().setAccessible(true);
             return getComponent().getAccessor().invoke(instance);
         } catch (Exception e) {
             throw new RemixException(e);

@@ -24,8 +24,6 @@ public class RecordCacheData<T extends Record> {
         this.remix = remix;
         this.constructor = constructor;
         this.parameters = parameters;
-        this.recordInstance = defaultRecordInstance(constructor, parameters);
-        this.resolverCache = new RecordResolverData<T>(recordInstance, parameters);
         this.getOperations = getOperations;
         this.assignOperations = assignOperations;
         this.setOperations = setOperations;
@@ -45,19 +43,19 @@ public class RecordCacheData<T extends Record> {
     }
 
     static <R extends Record, T extends RecordRemix<R>> RecordCacheData<R> fromRecordClass(Class<R> recordClass) {
-        Class<T> clazz = (Class<T>) recordClass.getAnnotation(Remix.class).value();
-        RecordRemix<R> remix = RecordRemixCache.getRecordRemix(clazz);
-
         var get = new RecordOperationsImpl<>(recordClass);
         var set = new RecordOperationsImpl<>(recordClass);
         var assign = new RecordOperationsImpl<>(recordClass);
         var copy = new RecordOperationsImpl<>(recordClass);
 
-
+        RecordRemix<R> remix = null;
         if (hasRemixAnnotation(recordClass)) {
             if (recordClass.getDeclaredConstructors().length > 1) {
                 throw new RemixException("More than one constructors declared");
             }
+            Class<T> clazz = (Class<T>) recordClass.getAnnotation(Remix.class).value();
+            remix = RecordRemixCache.getRecordRemix(clazz);
+
 
             remix.get(get);
             remix.set(set);
@@ -65,33 +63,25 @@ public class RecordCacheData<T extends Record> {
             remix.copy(copy);
         }
 
-        return new RecordCacheData<R>(remix, (Constructor<R>) recordClass.getDeclaredConstructors()[0],
+        var cons = (Constructor<R>) recordClass.getDeclaredConstructors()[0];
+        cons.setAccessible(true);
+        return new RecordCacheData<R>(remix, cons,
                 RecordParameter.fromRecordComponents(recordClass), get, assign, set, copy);
-    }
-
-    static <T extends Record> T defaultRecordInstance(Constructor<T> constructor, List<RecordParameter> parameters) {
-        Object[] args = new Object[parameters.size()];
-        for (int i = 0; i < args.length; i++) {
-            args[i] = parameters.get(i).defaultValue();
-        }
-        T obj = Records.createRaw(constructor.getDeclaringClass(), args);
-        return obj;
-    }
-
-    public T getRecordInstance() {
-        return recordInstance;
     }
 
     public RecordBlank<T> getBlank() {
         if (blank == null) {
             RecordBuilder<T> b = new RecordBuilderImpl<T>(constructor.getDeclaringClass());
-            this.remix.blank(b);
+            if (remix != null) this.remix.blank(b);
             this.blank = b.blank();
         }
         return blank;
     }
 
     public RecordResolverData<T> getResolverCache() {
+        if (resolverCache == null) {
+            this.resolverCache = new RecordResolverData<T>(constructor, parameters);
+        }
         return resolverCache;
     }
 

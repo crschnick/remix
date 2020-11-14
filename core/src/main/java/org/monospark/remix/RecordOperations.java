@@ -3,6 +3,7 @@ package org.monospark.remix;
 import org.monospark.remix.internal.RecordOperationsImpl;
 
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 /**
@@ -20,5 +21,5 @@ public sealed interface RecordOperations<R extends Record>permits RecordOperatio
 
 
     //<T> RecordOperations<R> check(WrappedPrimitiveFunction<R,T> component, Function<T,Boolean> toCheck);
-    <T> RecordOperations<R> check(Function<R, Wrapped<T>> component, Function<T, Boolean> toCheck);
+    <T> RecordOperations<R> check(Function<R, Wrapped<T>> component, Predicate<T> toCheck);
 }

@@ -5,6 +5,7 @@ import org.monospark.remix.Wrapped;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 public final class RecordOperationsImpl<R extends Record> implements RecordOperations<R> {
@@ -55,9 +56,9 @@ public final class RecordOperationsImpl<R extends Record> implements RecordOpera
     }
 
     @Override
-    public <T> RecordOperations<R> check(Function<R, Wrapped<T>> component, Function<T, Boolean> toCheck) {
+    public <T> RecordOperations<R> check(Function<R, Wrapped<T>> component, Predicate<T> toCheck) {
         return add(component, (T v) -> {
-            if (!toCheck.apply(v)) {
+            if (!toCheck.test(v)) {
                 throw new IllegalArgumentException("Condition not met");
             } else {
                 return v;

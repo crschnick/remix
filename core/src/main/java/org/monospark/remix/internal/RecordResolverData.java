@@ -1,8 +1,11 @@
 package org.monospark.remix.internal;
 
+import org.monospark.remix.RecordBuilder;
 import org.monospark.remix.RecordBuilderException;
 import org.monospark.remix.Records;
+import org.monospark.remix.Wrapped;
 
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,8 +26,8 @@ public final class RecordResolverData<R extends Record> {
 
     private Map<RecordParameter, Object> cachedParameters;
 
-    RecordResolverData(R defaultInstance, List<RecordParameter> parameters) {
-        this.wrapperInstance = defaultInstance;
+    RecordResolverData(Constructor<R> constructor, List<RecordParameter> parameters) {
+        this.wrapperInstance = defaultRecordInstance(constructor, parameters);
         this.parameters = parameters;
         this.cachedParameters = new HashMap<>();
         this.booleanResolveInstances = BooleanResolver.createInstances(parameters);
@@ -37,9 +40,28 @@ public final class RecordResolverData<R extends Record> {
         return BooleanResolver.resolveParameter(parameters, booleanResolveInstances, methodRef);
     }
 
-    <T> RecordParameter resolveWrapped(Function<R, ?> methodRef) {
+    RecordParameter resolveWrapped(RecordBuilder.WrappedBooleanFunction<R> methodRef) {
         Object wrapperValue = methodRef.apply(wrapperInstance);
         return ((Wrapper) wrapperValue).getRecordParameter();
+    }
+
+    RecordParameter resolveWrapped(RecordBuilder.WrappedFunction<R, ?> methodRef) {
+        Object wrapperValue = methodRef.apply(wrapperInstance);
+        return ((Wrapper) wrapperValue).getRecordParameter();
+    }
+
+    <T> RecordParameter resolveWrapped(Function<R, Wrapped<T>> methodRef) {
+        Object wrapperValue = methodRef.apply(wrapperInstance);
+        return ((Wrapper) wrapperValue).getRecordParameter();
+    }
+
+    private R defaultRecordInstance(Constructor<R> constructor, List<RecordParameter> parameters) {
+        Object[] args = new Object[parameters.size()];
+        for (int i = 0; i < args.length; i++) {
+            args[i] = parameters.get(i).defaultValue();
+        }
+        R obj = Records.createRaw(constructor.getDeclaringClass(), args);
+        return obj;
     }
 
     <T> RecordParameter resolve(Function<R, ?> methodRef, Supplier<T> valueSupplier) {

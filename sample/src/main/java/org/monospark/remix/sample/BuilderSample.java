@@ -50,105 +50,13 @@ public class BuilderSample {
         // Throws an exception, since the returned view is unmodifiable
         databaseContent.clear();
 
-        var out = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(out);
-            oos.writeObject(c1);
-            oos.flush();
-            byte[] b = out.toByteArray();
+        record OtherColor(int red, int green, int blue) {}
+        Color c = Records.create(Color.class, 500, 2032, 2034);
+        System.out.println(c);
+        OtherColor other = Records.structuralCopy(OtherColor.class, c);
+        System.out.println(other);
+        Color fromOther = Records.structuralCopy(Color.class, other);
+        System.out.println(fromOther);
 
-        System.out.println(new String(b));
-
-            ByteArrayInputStream in = new ByteArrayInputStream(b);
-            ObjectInputStream ois = new ObjectInputStream(in);
-        try {
-            Car da = (Car) ois.readObject();
-            System.out.println(Records.get(da::available));
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-
-    }
-
-    public static class CarStatusBlank extends RecordRemix<CarStatus> {
-        @Override
-        public void blank(RecordBuilder<CarStatus> builder) {
-            builder.set(CarStatus::speed, () -> 1);
-        }
-
-        @Override
-        public void get(RecordOperations<CarStatus> ops) {
-
-        }
-
-        @Override
-        public void assign(RecordOperations<CarStatus> ops) {
-
-        }
-
-        @Override
-        public void set(RecordOperations<CarStatus> ops) {
-
-        }
-    }
-
-    public static class CarRemix extends RecordRemix<Car> {
-        @Override
-        public void blank(RecordBuilder<Car> builder) {
-            builder.set(Car::manufacturer, () -> "RemixCars");
-        }
-
-        @Override
-        public void assign(RecordOperations<Car> operations) {
-            operations.notNull(Car::manufacturer)
-                    .notNull(Car::model)
-                    .check(Car::price, p -> p > 0);
-        }
-    }
-
-    @Remix(CarDatabaseRemix.class)
-    public record CarDatabase(Wrapped<List<Car>> cars) implements Serializable {
-
-
-    }
-
-    public record CarDatabaseSer(List<Car> cars) implements Serializable {
-    }
-
-
-    @Remix(CarRemix.class)
-    public static record Car(Wrapped<String> manufacturer, Wrapped<String> model, WrappedInt price,
-                             MutableBoolean available) implements Serializable{
-    }
-
-
-    public record CarW(String manufacturer, String model, int price, boolean available) {
-    }
-
-    @Remix(CarStatusBlank.class)
-    public record CarStatus(int speed, int gear, boolean lightsOn, boolean wipersOn) {
-
-    }
-
-    public static class CarDatabaseRemix extends RecordRemix<CarDatabase> {
-        @Override
-        public void blank(RecordBuilder<CarDatabase> builder) {
-            // The default value for the car list should be an empty array list
-            builder.set(CarDatabase::cars, () -> new ArrayList<>());
-        }
-
-        @Override
-        public void get(RecordOperations<CarDatabase> ops) {
-            // Return an unmodifiable list view to prevent tampering with the database from outside this instance
-            ops.add(CarDatabase::cars, Collections::unmodifiableList);
-        }
-
-        @Override
-        public void assign(RecordOperations<CarDatabase> ops) {
-            // Check for null and make a defensive copy of the list when constructing an instance.
-            ops.notNull(CarDatabase::cars)
-                    .check(CarDatabase::cars, c -> !c.contains(null))
-                    .add(CarDatabase::cars, ArrayList::new);
-        }
     }
 }

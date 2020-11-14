@@ -38,6 +38,10 @@ public sealed class WrappedImpl<T> extends Wrapper implements Wrapped<T> permits
     }
 
     public T get() {
+        var ops = getRecordParameter().getGetOperation();
+        if (ops != null) {
+            return (T) getRecordParameter().getGetOperation().apply(value);
+        }
         return value;
     }
 }

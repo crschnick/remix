@@ -89,6 +89,6 @@ public final class RecordParameter implements Serializable {
     }
 
     public <T> UnaryOperator<T> getGetOperation() {
-        return RecordCache.getOrAdd(this.getRecord()).getGetOperations().getOperator(this);
+        return RecordCache.getOrAdd(this.getRecord()).getRemix().getGetOperations().getOperator(this);
     }
 }

@@ -3,19 +3,30 @@ package org.monospark.remix.sample;
 import org.monospark.remix.*;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class BuilderSample {
 
+    void doStuff() {
+        record TripleEntry(Mutable<String> stringId, MutableInt intId, Wrapped<Object> value) {}
+        Records.remix(TripleEntry.class, r -> r.assign(o -> o
+                .notNull(o.all())
+                .check(TripleEntry::stringId, s -> s.length() >= 5)
+                .check(TripleEntry::intId, i -> i >= 0)));
+        List<TripleEntry> list = new ArrayList<>();
+
+        // Do some stuff ...
+    }
+
     public static void main(String[] args) throws IOException {
-        Car c1 = Records.builder(Car.class)
+        Car car = Records.builder(Car.class)
                 .set(Car::manufacturer, () -> "RemixCars")
                 .set(Car::model, () -> "The Budget car")
                 .set(Car::price, () -> 10000)
                 .set(Car::available, () -> true)
                 .build();
+        Car copy = Records.copy(car);
+        Records.set(copy::available, false);
 
         RecordBlank<Car> carBlank = Records.builder(Car.class)
                 .set(Car::manufacturer, () -> "RemixCars")
@@ -52,11 +63,8 @@ public class BuilderSample {
 
         record OtherColor(int red, int green, int blue) {}
         Color c = Records.create(Color.class, 500, 2032, 2034);
-        System.out.println(c);
         OtherColor other = Records.structuralCopy(OtherColor.class, c);
-        System.out.println(other);
         Color fromOther = Records.structuralCopy(Color.class, other);
-        System.out.println(fromOther);
 
     }
 }

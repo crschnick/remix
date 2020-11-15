@@ -24,11 +24,11 @@ public final class Records {
             var p = parameters.get(i);
             Object arg;
             if (i > args.length) {
-                if (data.getBlank().getValue(p) == null) {
+                if (data.getRemix().getBlank().getValue(p) == null) {
                     throw new IllegalArgumentException("Missing value for component "
                             + parameters.get(i).getComponent().getName());
                 }
-                arg = data.getBlank().getValue(p).get();
+                arg = data.getRemix().getBlank().getValue(p).get();
             } else {
                 boolean nullCompat = args[i] == null && !p.getType().getValueType().isPrimitive();
                 boolean classCompat = args[i] != null && p.getType().getValueType().isAssignableFrom(args[i].getClass());
@@ -42,7 +42,7 @@ public final class Records {
                 arg = args[i];
             }
             try {
-                var op = data.getAssignOperations().getOperator(p);
+                var op = data.getRemix().getAssignOperations().getOperator(p);
                 Object afterAction = op != null ? op.apply(arg) : arg;
                 newArgs[i] = p.wrap(afterAction);
             } catch (Exception e) {
@@ -102,6 +102,11 @@ public final class Records {
         return out;
     }
 
+
+    public static <R extends Record> void remix(Class<R> src, RecordRemixer<R> rm) {
+        RecordCache.getOrAdd(src, rm);
+    }
+
     public static <R extends Record> SerializedRecord serialized(R obj) {
         Class<R> clazz = (Class<R>) obj.getClass();
         if (!clazz.isRecord()) {
@@ -115,8 +120,8 @@ public final class Records {
         Object[] args = toArray(src);
         int i = 0;
         for (var p : r.getParameters()) {
-            if (r.getCopyOperations().getOperator(p) != null) {
-                args[i] = r.getCopyOperations().getOperator(p).apply(args[i]);
+            if (r.getRemix().getCopyOperations().getOperator(p) != null) {
+                args[i] = r.getRemix().getCopyOperations().getOperator(p).apply(args[i]);
             }
             i++;
         }

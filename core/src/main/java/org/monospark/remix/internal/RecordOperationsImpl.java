@@ -25,7 +25,7 @@ public final class RecordOperationsImpl<R extends Record> implements RecordOpera
             RecordCacheData<R> d = RecordCache.getOrAdd(recordClass);
             List<OperatorEntry<R, T>> matchingEntries = new ArrayList<>();
             for (OperatorEntry<R, ?> e : operatorEntries) {
-                if (d.getResolverCache().resolveWrapped(e.reference).equals(param)) {
+                if (e.reference == null || d.getResolverCache().resolveWrapped(e.reference).equals(param)) {
                     matchingEntries.add((OperatorEntry<R, T>) e);
                 }
             }
@@ -64,6 +64,11 @@ public final class RecordOperationsImpl<R extends Record> implements RecordOpera
                 return v;
             }
         });
+    }
+
+    @Override
+    public <T> Function<R, Wrapped<T>> all() {
+        return null;
     }
 
     private record OperatorEntry<R extends Record, T>(Function<R, Wrapped<T>> reference, UnaryOperator<T> operator) {

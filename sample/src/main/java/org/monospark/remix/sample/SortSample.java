@@ -1,9 +1,9 @@
 package org.monospark.remix.sample;
 
-import org.monospark.remix.Records;
-import org.monospark.remix.Wrapped;
+import org.monospark.remix.*;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -27,17 +27,25 @@ public class SortSample {
 
     public enum EventType {REGISTER, LOGIN, LOGOUT}
 
-    public record Event(
-            Wrapped<EventType> type,
-
-            Wrapped<Instant> timestamp)
-            implements Comparable<Event> {
+    public record Event(Wrapped<EventType> type, Wrapped<Instant> timestamp) implements Comparable<Event> {
         @Override
         public int compareTo(Event o) {
             return timestamp.get().compareTo(o.timestamp.get());
         }
     }
 
+    @Remix(EventHistory.Remixer.class)
     public record EventHistory(Wrapped<List<Event>> events) {
+        static class Remixer implements RecordRemixer<EventHistory> {
+            @Override
+            public void create(RecordRemix<EventHistory> r) {
+                r.blank(b -> b.set(EventHistory::events, () -> new ArrayList<>()));
+                r.assign(o -> o
+                        .notNull(EventHistory::events)
+                        .notNull(EventHistory::events)
+                        .check(EventHistory::events, e -> !e.contains(null))
+                );
+            }
+        }
     }
 }

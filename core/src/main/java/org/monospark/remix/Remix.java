@@ -12,6 +12,7 @@ public @interface Remix {
     /**
      * The default value factories that should be used to generate the one or more default values.
      **/
-    Class<? extends RecordRemix<?>> value();
+    Class<? extends RecordRemixer<? extends Record>> value();
+
 
 }

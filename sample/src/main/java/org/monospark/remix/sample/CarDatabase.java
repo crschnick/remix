@@ -7,30 +7,28 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Remix(CarDatabase.Remix.class)
-public record CarDatabase(Wrapped<List<Car>> cars) implements Serializable {
+@Remix(CarDatabase.Remixer.class)
+public record CarDatabase(Wrapped<List<Car>> cars) {
 
-    static class Remix extends RecordRemix<CarDatabase> {
+    static class Remixer implements RecordRemixer<CarDatabase> {
         @Override
-        public void blank(RecordBuilder<CarDatabase> builder) {
+        public void create(RecordRemix<CarDatabase> r) {
             // The default value for the car list should be an empty array list
-            builder.set(CarDatabase::cars, () -> new ArrayList<>());
-        }
+            r.blank(b -> {
+                b.set(CarDatabase::cars, () -> new ArrayList<>());
+            });
 
-        @Override
-        public void get(RecordOperations<CarDatabase> ops) {
             // Return an unmodifiable list view to prevent tampering with the database from outside this instance
-            ops.add(CarDatabase::cars, Collections::unmodifiableList);
-        }
+            r.get(o -> o.add(CarDatabase::cars, Collections::unmodifiableList));
 
-        @Override
-        public void assign(RecordOperations<CarDatabase> ops) {
             // Check for null and make a defensive copy of the list when constructing an instance.
-            ops.notNull(CarDatabase::cars)
+            r.assign(o -> o
+                    .notNull(CarDatabase::cars)
                     .check(CarDatabase::cars, c -> !c.contains(null))
-                    .add(CarDatabase::cars, c -> {
-                        return new ArrayList<>(c);
-                    });
+                    .add(CarDatabase::cars, ArrayList::new)
+            );
+
+            r.copy(o -> o.);
         }
     }
 }

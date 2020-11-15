@@ -19,7 +19,7 @@ public sealed interface RecordOperations<R extends Record>permits RecordOperatio
 
     <T> RecordOperations<R> notNull(Function<R, Wrapped<T>> component);
 
-
-    //<T> RecordOperations<R> check(WrappedPrimitiveFunction<R,T> component, Function<T,Boolean> toCheck);
     <T> RecordOperations<R> check(Function<R, Wrapped<T>> component, Predicate<T> toCheck);
+
+    <T> Function<R, Wrapped<T>> all();
 }

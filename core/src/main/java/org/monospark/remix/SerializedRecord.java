@@ -12,7 +12,7 @@ public class SerializedRecord implements Serializable {
     private String className;
     private Object[] values;
 
-    public SerializedRecord(String className, Object[] values) {
+    SerializedRecord(String className, Object[] values) {
         this.className = className;
         this.values = values;
     }

@@ -11,16 +11,17 @@ public class RecordCache {
 
 
     public static <T extends Record> RecordCacheData<T> getOrAdd(Class<T> recordClass) {
-        return getOrAdd(recordClass, null);
-    }
-
-    public static <T extends Record> RecordCacheData<T> getOrAdd(Class<T> recordClass, RecordRemixer<T> rm) {
         if (DATA.containsKey(recordClass)) {
             return (RecordCacheData<T>) DATA.get(recordClass);
         } else {
-            RecordCacheData<T> r = RecordCacheData.fromRecordClass(recordClass, rm);
+            RecordCacheData<T> r = RecordCacheData.fromRecordClass(recordClass, null);
             DATA.put(recordClass, r);
             return r;
         }
+    }
+
+    public static <T extends Record> void register(Class<T> recordClass, RecordRemixer<T> rm) {
+        RecordCacheData<T> r = RecordCacheData.fromRecordClass(recordClass, rm);
+        DATA.put(recordClass, r);
     }
 }

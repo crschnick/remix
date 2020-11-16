@@ -1,5 +1,6 @@
 package org.monospark.remix.internal;
 
+import org.monospark.remix.MutableInt;
 import org.monospark.remix.WrappedInt;
 
 import java.io.IOException;
@@ -7,9 +8,9 @@ import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.Objects;
 
-public final class WrappedIntImpl extends Wrapper implements WrappedInt {
+public sealed class WrappedIntImpl extends Wrapper implements WrappedInt permits MutableIntImpl {
 
-    private int value;
+    protected int value;
 
     WrappedIntImpl(RecordParameter recordParameter, int value) {
         super(recordParameter);

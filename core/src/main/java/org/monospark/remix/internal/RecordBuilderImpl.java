@@ -4,9 +4,7 @@ import org.monospark.remix.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BooleanSupplier;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<R> {
 
@@ -38,7 +36,11 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
             args[i] = mapping.get(p).get();
             i++;
         }
-        return Records.create(recordClass, args);
+        try {
+            return Records.createRaw(recordClass, args);
+        } catch (Exception e) {
+            throw new RecordBuilderException("Could not create record instance", e);
+        }
     }
 
     @Override
@@ -47,30 +49,26 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
     }
 
     @Override
-    public <T> RecordBuilder<R> set(Function<R, T> component, Supplier<T> value) {
-        RecordParameter param = cacheData.getResolverCache().resolve(component, value);
-        mapping.put(param, value);
-        return this;
+    public <T> ComponentContext<R, T> set(Function<R, T> component) {
+        return new ComponentContext<R,T>() {
+            @Override
+            public RecordBuilder<R> to(Supplier<T> value) {
+                RecordParameter param = cacheData.getResolverCache().resolve(component, value);
+                RecordBuilderImpl.this.mapping.put(param, value);
+                return RecordBuilderImpl.this;
+            }
+        };
     }
 
     @Override
-    public RecordBuilder<R> set(Function<R, Boolean> component, BooleanSupplier value) {
-        RecordParameter param = cacheData.getResolverCache().resolveBoolean(component);
-        mapping.put(param, (Supplier<?>) value);
-        return this;
-    }
-
-    @Override
-    public <T> RecordBuilder<R> set(WrappedFunction<R, T> component, WrappedSupplier<T, Wrapped<T>> value) {
-        RecordParameter param = cacheData.getResolverCache().resolveWrapped(component);
-        mapping.put(param, value::supply);
-        return this;
-    }
-
-    @Override
-    public RecordBuilder<R> set(WrappedBooleanFunction<R> component, BooleanSupplier value) {
-        RecordParameter param = cacheData.getResolverCache().resolveWrapped(component);
-        mapping.put(param, value::getAsBoolean);
-        return this;
+    public <T> ComponentContext<R, T> set(LambdaSupport.WrappedFunction<R, T> component) {
+        return new ComponentContext<R,T>() {
+            @Override
+            public RecordBuilder<R> to(Supplier<T> value) {
+                RecordParameter param = cacheData.getResolverCache().resolveWrapped(component);
+                RecordBuilderImpl.this.mapping.put(param, value);
+                return RecordBuilderImpl.this;
+            }
+        };
     }
 }

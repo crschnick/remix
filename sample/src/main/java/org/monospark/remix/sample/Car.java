@@ -8,7 +8,7 @@ public record Car(Wrapped<String> manufacturer, Wrapped<String> model, WrappedIn
     static class Remixer implements RecordRemixer<Car> {
         @Override
         public void create(RecordRemix<Car> r) {
-            r.blank(b -> b.set(Car::manufacturer, () -> "RemixCars"));
+            r.blank(b -> b.set(Car::manufacturer).to(() -> "RemixCars"));
             r.assign(o -> {
                 o.notNull(Car::manufacturer)
                         .notNull(Car::model)

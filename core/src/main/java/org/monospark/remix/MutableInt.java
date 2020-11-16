@@ -1,4 +1,8 @@
 package org.monospark.remix;
 
-public sealed interface MutableInt extends WrappedInt  {
+import org.monospark.remix.internal.MutableIntImpl;
+
+public sealed interface MutableInt extends WrappedInt permits MutableIntImpl {
+
+    public void set(int value);
 }

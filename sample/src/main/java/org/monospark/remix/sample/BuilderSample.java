@@ -20,22 +20,22 @@ public class BuilderSample {
 
     public static void main(String[] args) throws IOException {
         Car c1 = Records.builder(Car.class)
-                .set(Car::manufacturer, () -> "RemixCars")
-                .set(Car::model, () -> "The Budget car")
-                .set(Car::price, () -> 10000)
-                .set(Car::available, () -> true)
+                .set(Car::manufacturer).to(() -> "RemixCars")
+                .set(Car::model).to(() -> "The Budget car")
+                .set(Car::price).to(() -> 10000)
+                .set(Car::available).to(() -> true)
                 .build();
         Car copy = Records.copy(c1);
         Records.set(copy::available, false);
 
         RecordBlank<Car> carBlank = Records.builder(Car.class)
-                .set(Car::manufacturer, () -> "RemixCars")
+                .set(Car::manufacturer).to(() -> "RemixCars")
                 .blank();
 
         Car c2 = Records.builder(carBlank)
-                .set(Car::model, () -> "The luxurious car")
-                .set(Car::price, () -> 60000)
-                .set(Car::available, () -> true)
+                .set(Car::model).to(() -> "The luxurious car")
+                .set(Car::price).to(() -> 60000)
+                .set(Car::available).to(() -> true)
                 .build();
 
 //        var cs = Records.blank(CarStatus.class)

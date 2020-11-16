@@ -1,5 +1,6 @@
 package org.monospark.remix.internal;
 
+import org.monospark.remix.LambdaSupport;
 import org.monospark.remix.RecordOperations;
 import org.monospark.remix.Wrapped;
 
@@ -45,18 +46,20 @@ public final class RecordOperationsImpl<R extends Record> implements RecordOpera
     }
 
     @Override
-    public <T> RecordOperations<R> add(Function<R, Wrapped<T>> component, UnaryOperator<T> op) {
+    public <T> RecordOperations<R> add(LambdaSupport.WrappedFunction<R, T> component, UnaryOperator<T> op) {
+        Objects.requireNonNull(op, "Operator must be not null");
         this.operatorEntries.add(new OperatorEntry<R, T>(component, op));
         return this;
     }
 
     @Override
-    public <T> RecordOperations<R> notNull(Function<R, Wrapped<T>> component) {
+    public <T> RecordOperations<R> notNull(LambdaSupport.WrappedFunction<R,T> component) {
         return add(component, Objects::requireNonNull);
     }
 
     @Override
-    public <T> RecordOperations<R> check(Function<R, Wrapped<T>> component, Predicate<T> toCheck) {
+    public <T> RecordOperations<R> check(LambdaSupport.WrappedFunction<R,T> component, Predicate<T> toCheck) {
+        Objects.requireNonNull(toCheck, "Predicate must be not null");
         return add(component, (T v) -> {
             if (!toCheck.test(v)) {
                 throw new IllegalArgumentException("Condition not met");
@@ -67,10 +70,12 @@ public final class RecordOperationsImpl<R extends Record> implements RecordOpera
     }
 
     @Override
-    public <T> Function<R, Wrapped<T>> all() {
+    public <T> LambdaSupport.WrappedFunction<R,T> all() {
         return null;
     }
 
-    private record OperatorEntry<R extends Record, T>(Function<R, Wrapped<T>> reference, UnaryOperator<T> operator) {
+    private record OperatorEntry<R extends Record, T>(
+            LambdaSupport.WrappedFunction<R, T> reference,
+            UnaryOperator<T> operator) {
     }
 }

@@ -1,9 +1,6 @@
 package org.monospark.remix.internal;
 
-import org.monospark.remix.RecordBuilder;
-import org.monospark.remix.RecordBuilderException;
-import org.monospark.remix.Records;
-import org.monospark.remix.Wrapped;
+import org.monospark.remix.*;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
@@ -40,17 +37,7 @@ public final class RecordResolverData<R extends Record> {
         return BooleanResolver.resolveParameter(parameters, booleanResolveInstances, methodRef);
     }
 
-    RecordParameter resolveWrapped(RecordBuilder.WrappedBooleanFunction<R> methodRef) {
-        Object wrapperValue = methodRef.apply(wrapperInstance);
-        return ((Wrapper) wrapperValue).getRecordParameter();
-    }
-
-    RecordParameter resolveWrapped(RecordBuilder.WrappedFunction<R, ?> methodRef) {
-        Object wrapperValue = methodRef.apply(wrapperInstance);
-        return ((Wrapper) wrapperValue).getRecordParameter();
-    }
-
-    <T> RecordParameter resolveWrapped(Function<R, Wrapped<T>> methodRef) {
+    <T> RecordParameter resolveWrapped(LambdaSupport.WrappedFunction<R,T> methodRef) {
         Object wrapperValue = methodRef.apply(wrapperInstance);
         return ((Wrapper) wrapperValue).getRecordParameter();
     }
@@ -71,7 +58,7 @@ public final class RecordResolverData<R extends Record> {
                 return p;
             }
         }
-        throw new RecordBuilderException("Could not resolve record component for input value "
+        throw new RecordResolveException("Could not resolve record component for input value "
                 + valueSupplier.get().toString() + ", therefore the method reference does not belong to the associated record class");
     }
 

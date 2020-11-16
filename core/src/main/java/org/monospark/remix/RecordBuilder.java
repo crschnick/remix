@@ -2,36 +2,45 @@ package org.monospark.remix;
 
 import org.monospark.remix.internal.RecordBuilderImpl;
 
-import java.util.function.BooleanSupplier;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.Collection;
+import java.util.function.*;
 
-public sealed interface RecordBuilder<R extends Record>permits RecordBuilderImpl {
+public sealed interface RecordBuilder<R extends Record> permits RecordBuilderImpl {
 
+    /**
+     * Creates a new instance of the record class using the previously set record component values.
+     *
+     * @throws RecordBuilderException if any parameter does not have a set value or
+     * any error occurs when calling the canonical record constructor
+     */
     R build();
 
     RecordBlank<R> blank();
 
-    <T> RecordBuilder<R> set(Function<R, T> component, Supplier<T> value);
+    interface ComponentContext<R extends Record,T> {
 
-    RecordBuilder<R> set(Function<R, Boolean> component, BooleanSupplier value);
-
-    <T> RecordBuilder<R> set(WrappedFunction<R, T> component, WrappedSupplier<T, Wrapped<T>> value);
-
-    RecordBuilder<R> set(WrappedBooleanFunction<R> component, BooleanSupplier value);
-
-    @FunctionalInterface
-    interface WrappedFunction<R extends Record, T> {
-        Wrapped<T> apply(R r);
+        /**
+         * Supplies the value of a given record component.
+         *
+         * @param value a supplier that supplies the value whenever a new instance is built
+         * @throws NullPointerException if the argument is null
+         */
+        RecordBuilder<R> to(Supplier<T> value);
     }
 
-    @FunctionalInterface
-    interface WrappedBooleanFunction<R extends Record> {
-        WrappedBoolean apply(R r);
-    }
+    /**
+     * Sets the value for a given record component.
+     *
+     * @param component the record component
+     * @throws NullPointerException if the argument is null
+     * @throws RecordResolveException if the specified record component can not be resolved.
+     * This happens when the given function is not a record component accessor reference
+     * of the record class of this builder.
+     */
+    <T> ComponentContext<R,T> set(Function<R, T> component);
 
-    @FunctionalInterface
-    interface WrappedSupplier<W, T extends Wrapped<W>> {
-        W supply();
-    }
+    /**
+     * Wrapper overload of {@link #set(Function)}
+     */
+    <T> ComponentContext<R,T> set(LambdaSupport.WrappedFunction<R,T> component);
 }

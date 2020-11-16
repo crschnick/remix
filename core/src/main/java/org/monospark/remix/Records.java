@@ -3,8 +3,10 @@ package org.monospark.remix;
 import org.monospark.remix.internal.*;
 
 import java.lang.reflect.Constructor;
-import java.util.List;
+import java.util.Objects;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public final class Records {
@@ -16,7 +18,9 @@ public final class Records {
     private static Object createInternal(Constructor<?> constructor, RecordCacheData<?> data, Object... args) {
         var parameters = data.getParameters();
         if (args.length > parameters.size()) {
-            throw new IllegalArgumentException("Too many arguments");
+            throw new IllegalArgumentException("Too many arguments. Required for record "
+                    + constructor.getDeclaringClass().getName() + ": " + constructor.getParameters().length
+                    + ", given: " + args.length);
         }
 
         Object[] newArgs = new Object[parameters.size()];
@@ -25,7 +29,7 @@ public final class Records {
             Object arg;
             if (i > args.length) {
                 if (data.getRemix().getBlank().getValue(p) == null) {
-                    throw new IllegalArgumentException("Missing value for component "
+                    throw new IllegalArgumentException("Missing value for record component "
                             + parameters.get(i).getComponent().getName());
                 }
                 arg = data.getRemix().getBlank().getValue(p).get();
@@ -37,28 +41,39 @@ public final class Records {
                 boolean compatible = nullCompat || classCompat || boxedCompat;
                 if (!compatible) {
                     throw new IllegalArgumentException("Incompatible types " +
-                            parameters.get(i).getType().getValueType().getName() + " and " + (args[i] == null ? "null" : args[i].getClass().getName()));
+                            parameters.get(i).getType().getValueType().getName() + " and "
+                            + (args[i] == null ? "null" : args[i].getClass().getName()));
                 }
                 arg = args[i];
             }
-            try {
-                var op = data.getRemix().getAssignOperations().getOperator(p);
-                Object afterAction = op != null ? op.apply(arg) : arg;
-                newArgs[i] = p.wrap(afterAction);
-            } catch (Exception e) {
-                int a = 0;
-            }
+            var op = data.getRemix().getAssignOperations().getOperator(p);
+            Object afterAction = op != null ? op.apply(arg) : arg;
+            newArgs[i] = p.wrap(afterAction);
         }
 
         try {
             return constructor.newInstance(newArgs);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RemixException("Could not create new record instance of "
+                    + constructor.getDeclaringClass().getName(), e);
         }
+    }
+
+    private static void verifyRecord(Class<?> clazz) {
+        Objects.requireNonNull(clazz, "Record class must be not null");
+        if (!clazz.isRecord()) {
+            throw new IllegalArgumentException("Class " + clazz.getName() + " is not a record");
+        }
+    }
+
+    private static void verifyArgs(Object[] args) {
+        Objects.requireNonNull(args, "Argument array must be not null");
     }
 
 
     public static <R extends Record> RecordBuilder<R> builder(Class<R> clazz) {
+        verifyRecord(clazz);
+
         return new RecordBuilderImpl<>(clazz);
     }
 
@@ -67,12 +82,18 @@ public final class Records {
     }
 
     public static <R extends Record> R create(Class<R> clazz, Object... args) {
+        verifyRecord(clazz);
+        verifyArgs(args);
+
         var r = RecordCache.getOrAdd(clazz);
         return (R) createInternal(r.getConstructor(), r, args);
     }
 
 
     public static <R extends Record> R createRaw(Class<R> clazz, Object... args) {
+        verifyRecord(clazz);
+        verifyArgs(args);
+
         try {
             return RecordCache.getOrAdd(clazz).getConstructor().newInstance(args);
         } catch (Exception e) {
@@ -81,6 +102,9 @@ public final class Records {
     }
 
     public static <R extends Record> R fromArray(Class<R> clazz, Object[] values) {
+        verifyRecord(clazz);
+        verifyArgs(values);
+
         var r = RecordCache.getOrAdd(clazz);
         int i = 0;
         Object[] newArgs = new Object[values.length];
@@ -92,6 +116,9 @@ public final class Records {
     }
 
     public static <R extends Record> Object[] toArray(R src) {
+        Objects.requireNonNull(src, "Source record must be not null");
+        verifyRecord(src.getClass());
+
         var r = RecordCache.getOrAdd(src.getClass());
         Object[] out = new Object[r.getParameters().size()];
         int i = 0;
@@ -104,18 +131,24 @@ public final class Records {
 
 
     public static <R extends Record> void remix(Class<R> src, RecordRemixer<R> rm) {
-        RecordCache.getOrAdd(src, rm);
+        verifyRecord(src);
+        Objects.requireNonNull(rm, "Remixer must be not null");
+
+        RecordCache.register(src, rm);
     }
 
     public static <R extends Record> SerializedRecord serialized(R obj) {
-        Class<R> clazz = (Class<R>) obj.getClass();
-        if (!clazz.isRecord()) {
-            throw new RemixException("Class " + clazz.getName() + " is not a record");
-        }
+        Objects.requireNonNull(obj, "Record instance must be not null");
+        Class<?> clazz = obj.getClass();
+        verifyRecord(clazz);
+
         return new SerializedRecord(clazz.getName(), Records.toArray(obj));
     }
 
     private static <R extends Record> Object[] copyValues(R src) {
+        Objects.requireNonNull(src, "Record instance must be not null");
+        verifyRecord(src.getClass());
+
         var r = RecordCache.getOrAdd(src.getClass());
         Object[] args = toArray(src);
         int i = 0;
@@ -128,42 +161,62 @@ public final class Records {
         return args;
     }
     public static <R extends Record> R copy(R src) {
+        Objects.requireNonNull(src, "Record instance must be not null");
+        verifyRecord(src.getClass());
+
         return fromArray((Class<R>) src.getClass(), copyValues(src));
     }
 
     public static <D extends Record, S extends Record> D structuralCopy(Class<D> destClass, S src) {
+        Objects.requireNonNull(src, "Record instance must be not null");
+        verifyRecord(src.getClass());
+        verifyRecord(destClass);
+
         return fromArray(destClass, copyValues(src));
     }
 
-    public static <T> T get(Wrapped<T> entry) {
-        return entry.get();
+
+
+    public static <T> boolean get(BooleanSupplier component) {
+        Objects.requireNonNull(component, "Record component must be not null");
+        return component.getAsBoolean();
+    }
+    public static <T> int get(IntSupplier component) {
+        Objects.requireNonNull(component, "Record component must be not null");
+        return component.getAsInt();
+    }
+    public static <T> T get(Supplier<T> component) {
+        Objects.requireNonNull(component, "Record component must be not null");
+        return component.get();
     }
 
-    public static <T> T get(Supplier<Wrapped<List<T>>> entry, int index) {
-        return entry.get().get().get(index);
+
+
+    public static boolean get(LambdaSupport.WrappedBooleanSupplier component) {
+        Objects.requireNonNull(component, "Record component must be not null");
+        return component.get().get();
+    }
+    public static int get(LambdaSupport.WrappedIntSupplier component) {
+        Objects.requireNonNull(component, "Record component must be not null");
+        return component.get().get();
+    }
+    public static <T> T get(LambdaSupport.WrappedSupplier<T> component) {
+        Objects.requireNonNull(component, "Record component must be not null");
+        return component.get().get();
     }
 
-    public static <T> T get(Supplier<Wrapped<T>> entry) {
-        return entry.get().get();
-    }
 
-    public static <R extends Record, T> T get(Function<R, Wrapped<T>> entry, R instance) {
-        return entry.apply(instance).get();
-    }
 
-    public static <T> void set(Mutable<T> entry, T value) {
-        entry.set(value);
+    public static void set(LambdaSupport.MutableBooleanSupplier component, boolean value) {
+        Objects.requireNonNull(component, "Record component must be not null");
+        component.get().set(value);
     }
-
-    public static <T> void set(Supplier<Mutable<T>> entry, T value) {
-        entry.get().set(value);
+    public static void set(LambdaSupport.MutableIntSupplier component, int value) {
+        Objects.requireNonNull(component, "Record component must be not null");
+        component.get().set(value);
     }
-
-    public static void set(MutableBoolean entry, boolean value) {
-        entry.set(value);
-    }
-
-    public static void set(Supplier<MutableBoolean> entry, boolean value) {
-        entry.get().set(value);
+    public static <T> void set(LambdaSupport.MutableSupplier<T> component, T value) {
+        Objects.requireNonNull(component, "Record component must be not null");
+        component.get().set(value);
     }
 }

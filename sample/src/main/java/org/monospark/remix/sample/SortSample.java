@@ -16,13 +16,15 @@ public class SortSample {
         var e4 = Records.create(Event.class, EventType.LOGOUT);
 
         var history = Records.builder(EventHistory.class)
-                .set(EventHistory::events, () -> List.of(e1, e2, e3, e4))
+                .set(EventHistory::events).to(() -> List.of(e1, e2, e3, e4))
                 .build();
 
-        assert Records.get(history::events, 0).equals(e1);
-        assert Records.get(history::events, 1).equals(e3);
-        assert Records.get(history::events, 2).equals(e2);
-        assert Records.get(history::events, 3).equals(e4);
+        assert Records.get(history::events).get(0).equals(e1);
+        assert Records.get(history::events).get(1).equals(e3);
+        assert Records.get(history::events).get(2).equals(e2);
+        assert Records.get(history::events).get(3).equals(e4);
+
+        Records.get(e1::timestamp).toString();
     }
 
     public enum EventType {REGISTER, LOGIN, LOGOUT}
@@ -39,7 +41,7 @@ public class SortSample {
         static class Remixer implements RecordRemixer<EventHistory> {
             @Override
             public void create(RecordRemix<EventHistory> r) {
-                r.blank(b -> b.set(EventHistory::events, () -> new ArrayList<>()));
+                r.blank(b -> b.set(EventHistory::events).to(ArrayList::new));
                 r.assign(o -> o
                         .notNull(EventHistory::events)
                         .notNull(EventHistory::events)

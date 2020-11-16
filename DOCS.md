@@ -43,7 +43,7 @@ then serialization between both versions will work fine.
 Of course, if the unwrapped type of a component changes, i.e. `int` to ``BigInteger``, or components are added/removed,
 then this will make the two versions incompatible.
 
-## Inline records
+## Local records
 
 Records are also designed to be used locally in methods.
 This is useful if you need some kind of custom value storage for only one method.

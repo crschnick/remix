@@ -19,13 +19,13 @@ public class BuilderSample {
     }
 
     public static void main(String[] args) throws IOException {
-        Car car = Records.builder(Car.class)
+        Car c1 = Records.builder(Car.class)
                 .set(Car::manufacturer, () -> "RemixCars")
                 .set(Car::model, () -> "The Budget car")
                 .set(Car::price, () -> 10000)
                 .set(Car::available, () -> true)
                 .build();
-        Car copy = Records.copy(car);
+        Car copy = Records.copy(c1);
         Records.set(copy::available, false);
 
         RecordBlank<Car> carBlank = Records.builder(Car.class)
@@ -52,12 +52,12 @@ public class BuilderSample {
         List<Car> cars = new ArrayList<>();
         cars.add(c1);
         cars.add(c2);
-        CarDatabase d = Records.create(CarDatabase.class, cars);
+        CarStorage store = Records.create(CarStorage.class, cars);
 
         // Doesn't alter the database
         cars.clear();
 
-        List<Car> databaseContent = Records.get(d::cars);
+        List<Car> databaseContent = Records.get(store::cars);
         // Throws an exception, since the returned view is unmodifiable
         databaseContent.clear();
 

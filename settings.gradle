@@ -1,5 +1,5 @@
 rootProject.name = 'remix'
-include 'core'
-include 'sample'
+include 'remix'
+include 'samples'
 include 'speedtest'
 

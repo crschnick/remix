@@ -90,7 +90,8 @@ that is able to alter the standard record behaviour:
         static class Remixer implements RecordRemixer<CarStorage> {
             @Override
             public void create(RecordRemix<CarStorage> r) {
-                // Return an unmodifiable list view to prevent tampering with the database from outside this instance
+                // Return an unmodifiable list view to prevent tampering
+                // with the database from outside this instance
                 r.get(o -> o.add(CarStorage::cars, Collections::unmodifiableList));
     
                 // Check for null and make a defensive copy of the list when constructing an instance.
@@ -117,6 +118,10 @@ does input validation while still being a simple value storage:
     List<Car> databaseContent = Records.get(store::cars);
     // Throws an exception, since the returned view is unmodifiable
     databaseContent.clear();
+    
+A Remixer class therefore allows you to add custom
+behaviour to record components only when needed.
+    
     
 ## Mutable components
 
@@ -330,6 +335,7 @@ This is also shorter than explicitly defining a Remixer class and annotating the
 
 ## More
 
+- Samples are available [here](https://github.com/crschnick/remix/tree/master/samples/src/main/java/org/monospark/remix/samples)
 - The javadocs are available at [...]()
 - This is a new library, so there will probably be some bugs.
 If you stumble upon one of them, please report them.

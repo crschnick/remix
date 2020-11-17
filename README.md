@@ -1,3 +1,5 @@
+[![javadoc](https://javadoc.io/badge2/org.monospark/remix/javadoc.svg)](https://javadoc.io/doc/org.monospark/remix) 
+
 # Remix
 
 Remix is a new lightweight Java library that provides useful features for the
@@ -8,6 +10,18 @@ newly introduced [record classes](https://openjdk.java.net/jeps/395), which are 
 To use Remix, you must use one of the following:
 - An early-access build of [JDK 16](https://jdk.java.net/16/)
 - [JDK 15](https://jdk.java.net/15/) with [preview features](https://docs.oracle.com/en/java/javase/15/language/preview-language-and-vm-features.html) enabled
+
+Maven:
+
+    <dependency>
+      <groupId>org.monospark</groupId>
+      <artifactId>remix</artifactId>
+      <version>0.1</version>
+    </dependency>
+    
+Gradle:
+
+    implementation group: 'org.monospark', name: 'remix', version: '0.1'
 
 ## Motivation
 
@@ -336,7 +350,7 @@ This is also shorter than explicitly defining a Remixer class and annotating the
 ## More
 
 - Samples are available [here](https://github.com/crschnick/remix/tree/master/samples/src/main/java/org/monospark/remix/samples)
-- The javadocs are available at [...]()
+- The javadocs are available at [javadoc.io](https://javadoc.io/doc/org.monospark/remix )
 - This is a new library, so there will probably be some bugs.
 If you stumble upon one of them, please report them.
 - If you would like to contribute to this project, feel free to do so!

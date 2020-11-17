@@ -1,0 +1,52 @@
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId 'org.monospark'
+            artifactId 'remix'
+            from components.java
+
+            pom {
+                name = 'Remix'
+                description = 'A library that puts a new spin on the newly introduced record classes.'
+                url = 'https://github.com/crschnick/remix'
+                licenses {
+                    license {
+                        name = 'The MIT License (MIT)'
+                        url = 'https://github.com/crschnick/remix/LICENSE'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'crschnick'
+                        name = 'Christopher Schnick'
+                        email = 'c.schnick@monospark.org'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/crschnick/remix.git'
+                    developerConnection = 'scm:git:ssh://github.com/crschnick/remix.git'
+                    url = 'https://github.com/crschnick/remix'
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            credentials {
+                setUsername sonatypeUsername
+                setPassword sonatypePassword
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.mavenJava
+}

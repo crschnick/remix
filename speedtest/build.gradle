@@ -19,10 +19,6 @@ application {
     applicationDefaultJvmArgs = ["--enable-preview"]
 }
 
-
-group 'org.monospark.remix'
-version '0.1'
-
 repositories {
     mavenCentral()
 }

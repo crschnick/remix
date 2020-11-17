@@ -9,6 +9,7 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class RecordsTest {
 
+    @Ignore
     public Car createCar() {
         Car c = Records.builder(Car.class)
                 .set(Car::manufacturer).to(() -> "RemixCars")

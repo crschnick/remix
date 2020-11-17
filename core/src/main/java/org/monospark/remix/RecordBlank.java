@@ -6,7 +6,7 @@ import org.monospark.remix.internal.RecordParameter;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public sealed abstract class RecordBlank<R extends Record>permits RecordBlankImpl {
+public sealed abstract class RecordBlank<R extends Record> permits RecordBlankImpl {
 
     protected abstract RecordBuilder<R> builder();
 

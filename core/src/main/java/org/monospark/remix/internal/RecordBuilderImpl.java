@@ -13,15 +13,13 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
     private Map<RecordParameter, Supplier<?>> mapping;
 
     RecordBuilderImpl(Class<R> recordClass, Map<RecordParameter, Supplier<?>> mapping) {
-        RecordCacheData<R> d = RecordCache.getOrAdd(recordClass);
-        this.cacheData = d;
+        this.cacheData = RecordCache.getOrAdd(recordClass);
         this.recordClass = recordClass;
         this.mapping = new HashMap<>(mapping);
     }
 
     public RecordBuilderImpl(Class<R> recordClass) {
-        RecordCacheData<R> d = RecordCache.getOrAdd(recordClass);
-        this.cacheData = d;
+        this.cacheData = RecordCache.getOrAdd(recordClass);
         this.recordClass = recordClass;
         this.mapping = new HashMap<>();
     }
@@ -37,7 +35,7 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
             i++;
         }
         try {
-            return Records.createRaw(recordClass, args);
+            return Records.create(recordClass, args);
         } catch (Exception e) {
             throw new RecordBuilderException("Could not create record instance", e);
         }

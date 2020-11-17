@@ -17,7 +17,7 @@ public record BibliographyStore(Wrapped<List<Entry>> entries) {
         public void create(RecordRemix<BibliographyStore> r) {
             // The default value should be an empty array list
             r.blank(b -> {
-                b.set(BibliographyStore::entries, () -> new ArrayList<>());
+                b.set(BibliographyStore::entries).to(ArrayList::new);
             });
 
             // Return an unmodifiable list view to prevent tampering from outside

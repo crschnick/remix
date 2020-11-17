@@ -10,7 +10,9 @@ import java.lang.annotation.Target;
 public @interface Remix {
 
     /**
-     * The default value factories that should be used to generate the one or more default values.
+     * The {@link RecordRemixer} class that should be associated to the record class.
+     *
+     * This annotation only works for record classes.
      **/
     Class<? extends RecordRemixer<? extends Record>> value();
 

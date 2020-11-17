@@ -16,20 +16,11 @@ public class LambdaSupport {
     }
 
 
-    @FunctionalInterface
-    public interface ObjectSupplier extends Supplier<Object> {
-    }
-
-    @FunctionalInterface
-    public interface WrappedValueSupplier<T,W extends Wrapped<T>> extends Supplier<T> {
-    }
-
-
-
 
     @FunctionalInterface
     public interface MutableFunction<T,W> extends Function<T,Wrapped<W>> {}
     
+
 
     @FunctionalInterface
     public interface WrappedBooleanSupplier extends Supplier<WrappedBoolean> { }
@@ -39,6 +30,7 @@ public class LambdaSupport {
 
     @FunctionalInterface
     public interface WrappedSupplier<T> extends Supplier<Wrapped<T>> {}
+
 
 
     @FunctionalInterface

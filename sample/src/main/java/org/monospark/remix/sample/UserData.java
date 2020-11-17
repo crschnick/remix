@@ -14,8 +14,8 @@ public record UserData(Wrapped<String> username,
         public void create(RecordRemix<UserData> r) {
             // When a new user is created, the user is automatically logged in
             r.blank(b -> b
-                    .set(UserData::online, () -> true)
-                    .set(UserData::lastLogin, () -> LocalDateTime.now()));
+                    .set(UserData::online).to(() -> true)
+                    .set(UserData::lastLogin).to(LocalDateTime::now));
 
             r.assign(o -> o
                     .notNull(o.all())

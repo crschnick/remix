@@ -15,7 +15,7 @@ public record CarStorage(Wrapped<List<Car>> cars) {
         public void create(RecordRemix<CarStorage> r) {
             // The default value for the car list should be an empty array list
             r.blank(b -> {
-                b.set(CarStorage::cars, () -> new ArrayList<>());
+                b.set(CarStorage::cars).to(ArrayList::new);
             });
 
             // Return an unmodifiable list view to prevent tampering with the database from outside this instance

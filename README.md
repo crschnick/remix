@@ -32,11 +32,11 @@ Let's look at the following example record:
 
 Remix allows you to create a Car instance as follows:
 
-    Car c1 = Records.builder(Car.class)
-            .set(Car::manufacturer, () -> "RemixCars")
-            .set(Car::model, () -> "The Budget car")
-            .set(Car::price, () -> 10000)
-            .set(Car::available, () -> true)
+    Car car = Records.builder(Car.class)
+            .set(Car::manufacturer).to(() -> "RemixCars")
+            .set(Car::model).to(() -> "The Budget car")
+            .set(Car::price).to(() -> 10000)
+            .set(Car::available).to(() -> true)
             .build();
             
             
@@ -48,21 +48,21 @@ These blank records can also be reused to effectively implement default values f
 
     // We only sell cars manufactured by us, so let's predefine the manufacturer
     RecordBlank<Car> carBlank = Records.builder(Car.class)
-            .set(Car::manufacturer, () -> "RemixCars")
+            .set(Car::manufacturer).to(() -> "RemixCars")
             .blank();
             
-    // No need to specify the manufacturer
+    // No need to specify the manufacturer since the builder takes already set values from the blank
     Car c2 = Records.builder(carBlank)
-            .set(Car::model, () -> "The luxurious car")
-            .set(Car::price, () -> 60000)
-            .set(Car::available, () -> true)
+            .set(Car::model).to(() -> "The luxurious car")
+            .set(Car::price).to(() -> 60000)
+            .set(Car::available).to(() -> true)
             .build();
     
 ## Wrapped components
 
 One limitation of records is that there is no possibility to override the
 component accessors or to validate some inputs without defining a complete canonical constructor.
-When working with the following record
+When working with the following record:
 
     public record CarStorage(List<Car> cars) {
         public void addCar(Car car) {
@@ -111,7 +111,7 @@ does input validation while still being a simple value storage:
     cars.add(c2);
     CarStorage store = Records.create(CarStorage.class, cars);
 
-    // Doesn't alter the database
+    // Doesn't alter the database since we made a defensive copy
     cars.clear();
 
     List<Car> databaseContent = Records.get(store::cars);
@@ -120,23 +120,25 @@ does input validation while still being a simple value storage:
     
 ## Mutable components
 
-While records are designed to be immutable value stores, in practice they are only shallowly immutable.
+While records are only designed to be shallowly immutable value stores.
 This allows Remix to provide Mutable wrappers that enable you to modify record
 components that would otherwise completely be immutable without violating the basic concepts of records.
 For example, we can modify the Car record to make the price and availability mutable:
 
-    record Car(Wrapped<String> manufacturer, Wrapped<String> model, MutableInt price, MutableBoolean available) {}
+    record Car(String manufacturer, String model, MutableInt price, MutableBoolean available) {}
     
 We can then modify car instances as follows:
 
     Car car = Records.builder(Car.class)
-            .set(Car::manufacturer, () -> "RemixCars")
-            .set(Car::model, () -> "The Budget car")
-            .set(Car::price, () -> 10000)
-            .set(Car::available, () -> true)
+            .set(Car::manufacturer).to(() -> "RemixCars")
+            .set(Car::model).to(() -> "The Budget car")
+            .set(Car::price).to(() -> 10000)
+            .set(Car::available).to(() -> true)
             .build();
     Records.set(car::available, false);
     Records.set(car::price, 12000);
+    
+The builder semantics however stay the same.
 
 
 ## Copies and deep copies
@@ -150,8 +152,8 @@ For example, instances of the Car record can easily be copied:
 
 However, this does not work if you want to perform copies of records
 that have a mutable component, like a mutable set or list.
-In this case, deep copies have to be performed to completely decouple copies of original instances
-.
+In this case, deep copies have to be performed to completely decouple copies of original instances.
+
 Lets take the following example of managing a storage of in-progress publications
 where the authors and the title can still change.
 An entry of this store looks like this:
@@ -184,7 +186,7 @@ The storage record could look like this:
             public void create(RecordRemix<Bibliography> r) {
                 // The default value should be an empty array list
                 r.blank(b -> {
-                    b.set(Bibliography::entries, () -> new ArrayList<>());
+                    b.set(Bibliography::entries=.to(() -> new ArrayList<>());
                 });
     
                 // Return an unmodifiable list view to prevent tampering from outside
@@ -233,9 +235,9 @@ Lets take the following simple color record that defines default values and does
             @Override
             public void create(RecordRemix<Color> r) {
                 r.blank(b -> b
-                        .set(Color::red, () -> 0)
-                        .set(Color::green, () -> 0)
-                        .set(Color::blue, () -> 0));
+                        .set(Color::red).to(() -> 0)
+                        .set(Color::green).to(() -> 0)
+                        .set(Color::blue).to(() -> 0));
                 Predicate<Integer> range = v -> v >= 0 && v <= Short.MAX_VALUE;
                 r.assign(o -> o.check(o.all(), range));
             }
@@ -303,7 +305,8 @@ and later on change the record class to this:
     }
     
 then serialization between both versions will work fine.
-Of course, if the unwrapped type of a component changes, i.e. `int` to ``BigInteger``, or components are added/removed,
+Of course, if the unwrapped type of a component changes, i.e. `int` to ``BigInteger``,
+the order of components changes or components are added/removed,
 then this will make the two versions incompatible.
 
 ## Local records
@@ -324,3 +327,11 @@ If you want to add some custom behaviour to that local record as well, use can d
     }
     
 This is also shorter than explicitly defining a Remixer class and annotating the record class.
+
+## More
+
+- The javadocs are available at [...]()
+- This is a new library, so there will probably be some bugs.
+If you stumble upon one of them, please report them.
+- If you would like to contribute to this project, feel free to do so!
+Formal contribution guidelines will be coming soon.

@@ -15,6 +15,9 @@ public sealed interface RecordBuilder<R extends Record> permits RecordBuilderImp
      */
     R build();
 
+    /**
+     * Creates a new blank for the record class using the previously set record component values.
+     */
     RecordBlank<R> blank();
 
     interface ComponentContext<R extends Record,T> {

@@ -62,12 +62,12 @@ Many features that remix provides are only possible because of the strict requir
 
 ## Record builders
 
-With Remix, records can be constructed using the well-established Builder pattern.
-Let's look at the following example record:
+With Remix, record instances can be constructed using the well-established Builder pattern.
+Let's define the following example record class:
 
     public record Car(String manufacturer, String model, int price, boolean available) {}
 
-Remix allows you to create a Car instance as follows:
+You can then create a Car instance as follows:
 
     Car car = Records.builder(Car.class)
             .set(Car::manufacturer).to(() -> "RemixCars")
@@ -75,12 +75,17 @@ Remix allows you to create a Car instance as follows:
             .set(Car::price).to(() -> 10000)
             .set(Car::available).to(() -> true)
             .build();
-            
-            
+                    
+By default, every component is assigned its default value,
+i.e. null for objects and 0, 0.0, false, etc. for primitives.
+
+    // model and manufacturer are null, price is 0, available is false
+    Car defaultCar = Records.builder(Car.class).build();
+    
 ## Record blanks
 
 In addition, these builders also enable you to create record blanks,
-which are basically blueprints to create new instances of some record.
+which are basically blueprints to create new instances of some record class.
 These blank records can also be reused to effectively implement default values for record components:
 
     // We only sell cars manufactured by us, so let's predefine the manufacturer
@@ -102,9 +107,7 @@ These blank records can also be reused to effectively implement default values f
 According to the Java Language Specification, a record class is designed to be a shallowly immutable and
 transparent carrier for a fixed set of values, called the record components.
 While this shallow immutability is acceptable when working with records internally,
-it is nod ... when exposing records to other users.
-In their basic form however, records are severely limited in their capabilities
-and applications, because they are not completely mutable and not completely immutable.
+it is not when making records publicly usable.
 
 Suppose we want to create a simple car storage class.
 However, we want to be able to add new cars to it and validate the added car objects.
@@ -141,10 +144,13 @@ return an unmodifiable list view to prevent tampering with the database from out
 With records however, there is no possibility to override the component getters.
 Therefore, with standard records, it is impossible to solve this problem.
 
-The goal of remix is to provide tools to selectively override standard record
+
+Therefore, records in their basic form, are severely limited in their capabilities
+and applications, because they cannot be made completely immutable to the outside when one component is mutable.
+The goal of remix is to provide tools to selectively override this standard record
 behaviour for specific record components when needed.
     
-#### Wrapped components
+#### Using wrapped components
 
 If we want to achieve complete immutability from the outside, we can use wrapped components provided by Remix.
 This is done by wrapping the needed record components and creating a Remix object,

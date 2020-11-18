@@ -38,7 +38,7 @@ public class CarSampleTest {
     @Test
     public void testCarStorage() {
         var cars = createCars();
-        CarStorage store = Records.create(CarStorage.class, cars);
+        CarStorage store = Records.create(CarStorage.class, cars, 100);
 
         cars.clear();
         assertThat(store.cars().get().size(), equalTo(2));
@@ -47,7 +47,7 @@ public class CarSampleTest {
     @Test(expected = UnsupportedOperationException.class)
     public void testCarStorageUnmodifiable() {
         var cars = createCars();
-        CarStorage store = Records.create(CarStorage.class, cars);
+        CarStorage store = Records.create(CarStorage.class, cars, 100);
 
         List<Car> databaseContent = Records.get(store::cars);
         databaseContent.clear();

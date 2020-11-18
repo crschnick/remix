@@ -1,19 +1,19 @@
 package org.monospark.remix;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.monospark.remix.samples.Car;
 import org.monospark.remix.samples.CarStorage;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class CarSampleTest {
 
-    @Ignore
+    @Disabled
     private List<Car> createCars() {
         Car c1 = Records.builder(Car.class)
                 .set(Car::manufacturer).to(() -> "RemixCars")
@@ -41,15 +41,17 @@ public class CarSampleTest {
         CarStorage store = Records.create(CarStorage.class, cars, 100);
 
         cars.clear();
-        assertThat(store.cars().get().size(), equalTo(2));
+        assertEquals(store.cars().get().size(), 2);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testCarStorageUnmodifiable() {
         var cars = createCars();
         CarStorage store = Records.create(CarStorage.class, cars, 100);
 
         List<Car> databaseContent = Records.get(store::cars);
-        databaseContent.clear();
+        assertThrows(UnsupportedOperationException.class, () -> {
+            databaseContent.clear();
+        });
     }
 }

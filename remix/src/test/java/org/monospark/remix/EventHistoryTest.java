@@ -1,13 +1,12 @@
 package org.monospark.remix;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.monospark.remix.samples.EventHistory;
 
 import java.time.Instant;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class EventHistoryTest {
 
@@ -26,9 +25,9 @@ public class EventHistoryTest {
                 .set(EventHistory::events).to(() -> List.of(e1, e2, e3, e4))
                 .build();
 
-        assertThat(Records.get(history::events).get(0), equalTo(e1));
-        assertThat(Records.get(history::events).get(1), equalTo(e3));
-        assertThat(Records.get(history::events).get(2), equalTo(e2));
-        assertThat(Records.get(history::events).get(3), equalTo(e4));
+        assertEquals(Records.get(history::events).get(0), e1);
+        assertEquals(Records.get(history::events).get(1), e3);
+        assertEquals(Records.get(history::events).get(2), e2);
+        assertEquals(Records.get(history::events).get(3), e4);
     }
 }

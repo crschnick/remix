@@ -1,16 +1,13 @@
 package org.monospark.remix;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.monospark.remix.samples.Color;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ColorSampleTest {
-
-    @Ignore
-    public record OtherColor(int red, int green, int blue) {}
 
     @Test
     public void testStructuralCopy() {
@@ -18,15 +15,21 @@ public class ColorSampleTest {
         OtherColor other = Records.structuralCopy(OtherColor.class, c);
         Color fromOther = Records.structuralCopy(Color.class, other);
 
-        assertThat(Records.get(c::red), equalTo(Records.get(other::red)));
-        assertThat(Records.get(c::green), equalTo(Records.get(other::green)));
-        assertThat(Records.get(c::blue), equalTo(Records.get(other::blue)));
-        assertThat(c, equalTo(fromOther));
+        assertEquals(Records.get(c::red), Records.get(other::red));
+        assertEquals(Records.get(c::green), Records.get(other::green));
+        assertEquals(Records.get(c::blue), Records.get(other::blue));
+        assertEquals(c, fromOther);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testInvalid() {
         var c = Records.create(OtherColor.class, -1, -1, -1);
-        Records.structuralCopy(Color.class, c);
+        assertThrows(IllegalArgumentException.class, () -> {
+            Records.structuralCopy(Color.class, c);
+        });
+    }
+
+    @Disabled
+    public record OtherColor(int red, int green, int blue) {
     }
 }

@@ -1,19 +1,12 @@
 package org.monospark.remix;
 
-import org.junit.Ignore;
-import org.junit.Test;
 
-import java.io.*;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ResolverTest {
-
-    @Ignore
-    public static record TestRecord(String s1, String s2, Mutable<String> s3, boolean b4, boolean b5, Boolean b6) {
-    }
 
     @Test
     public void testNullAndDefaultResolvement() {
@@ -24,15 +17,15 @@ public class ResolverTest {
                 .set(TestRecord::b6).to(() -> null)
                 .build();
 
-        assertThat(Records.get(t::s1), equalTo(null));
-        assertThat(Records.get(t::s2), equalTo(null));
-        assertThat(Records.get(t::s3), equalTo(same));
-        assertThat(Records.get(t::b4), equalTo(false));
-        assertThat(Records.get(t::b5), equalTo(false));
-        assertThat(Records.get(t::b6), equalTo(null));
+        assertEquals(Records.get(t::s1), null);
+        assertEquals(Records.get(t::s2), null);
+        assertEquals(Records.get(t::s3), same);
+        assertEquals(Records.get(t::b4), false);
+        assertEquals(Records.get(t::b5), false);
+        assertEquals(Records.get(t::b6), null);
 
         Records.set(t::s3, "test2");
-        assertThat(Records.get(t::s3), equalTo("test2"));
+        assertEquals(Records.get(t::s3), "test2");
     }
 
     @Test
@@ -47,14 +40,18 @@ public class ResolverTest {
                 .set(TestRecord::b6).to(() -> true)
                 .build();
 
-        assertThat(Records.get(t::s1), equalTo(same));
-        assertThat(Records.get(t::s2), equalTo(same));
-        assertThat(Records.get(t::s3), equalTo(same));
-        assertThat(Records.get(t::b4), equalTo(false));
-        assertThat(Records.get(t::b5), equalTo(false));
-        assertThat(Records.get(t::b6), equalTo(true));
+        assertEquals(Records.get(t::s1), same);
+        assertEquals(Records.get(t::s2), same);
+        assertEquals(Records.get(t::s3), same);
+        assertEquals(Records.get(t::b4), false);
+        assertEquals(Records.get(t::b5), false);
+        assertEquals(Records.get(t::b6), true);
 
         Records.set(t::s3, "test2");
-        assertThat(Records.get(t::s3), equalTo("test2"));
+        assertEquals(Records.get(t::s3), "test2");
+    }
+
+    @Disabled
+    public static record TestRecord(String s1, String s2, Mutable<String> s3, boolean b4, boolean b5, Boolean b6) {
     }
 }

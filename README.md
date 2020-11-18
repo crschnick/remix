@@ -385,7 +385,7 @@ This is useful if you need some kind of custom value storage for only one method
 If you want to add some custom behaviour to that local record as well, use can do it like this:
 
     void doStuff() {
-        record TripleEntry(Mutable<String> stringId, MutableInt intId, Object value) {}
+        record TripleEntry(Mutable<String> stringId, MutableInt intId, Wrapped<Object> value) {}
         Records.remix(TripleEntry.class, r -> r.assign(o -> o
                 .notNull(o.all())
                 .check(TripleEntry::stringId, s -> s.length() >= 5)

@@ -1,15 +1,14 @@
 package org.monospark.remix;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.monospark.remix.samples.Car;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RecordsTest {
 
-    @Ignore
+    @Disabled
     public Car createCar() {
         Car c = Records.builder(Car.class)
                 .set(Car::manufacturer).to(() -> "RemixCars")
@@ -29,25 +28,25 @@ public class RecordsTest {
                 .set(Car::available).to(() -> true)
                 .build();
 
-        assertThat(Records.get(c1::manufacturer), equalTo("RemixCars"));
+        assertEquals(Records.get(c1::manufacturer), "RemixCars");
     }
 
     @Test
     public void testCopy() {
-        assertThat(createCar(), equalTo(Records.copy(createCar())));
+        assertEquals(createCar(), Records.copy(createCar()));
     }
 
     @Test
     public void testStructuralCopy() {
         var car = createCar();
         var otherCar = Records.structuralCopy(OtherCar.class, createCar());
-        assertThat(Records.get(car::manufacturer), equalTo(otherCar.manufacturer));
-        assertThat(car.model(), equalTo(otherCar.model));
-        assertThat(Records.get(car::price), equalTo(otherCar.price));
-        assertThat(Records.get(car::available), equalTo(otherCar.available));
+        assertEquals(Records.get(car::manufacturer), otherCar.manufacturer);
+        assertEquals(car.model(), otherCar.model);
+        assertEquals(Records.get(car::price), otherCar.price);
+        assertEquals(Records.get(car::available), otherCar.available);
     }
 
-    @Ignore
+    @Disabled
     public static record OtherCar(String manufacturer, Wrapped<String> model, int price,
                                   boolean available) {
     }

@@ -1,22 +1,24 @@
 package org.monospark.remix;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.monospark.remix.samples.BibliographyStore;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class BibliographySampleTest {
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testNull() {
-        var entry = Records.create(BibliographyStore.Entry.class,
-                List.of("James Gosling"),
-                "The Java Programming Language",
-                null);
+        assertThrows(NullPointerException.class, () -> {
+            var entry = Records.create(BibliographyStore.Entry.class,
+                    List.of("James Gosling"),
+                    "The Java Programming Language",
+                    null);
+        });
     }
 
     @Test
@@ -33,7 +35,7 @@ public class BibliographySampleTest {
         // This should not change the entry title in the original store because we are working on a copy!
         Records.set(entryInStoreCopy::authors, List.of("Ken Arnold", "James Gosling"));
 
-        assertThat(store.entries().get().get(0).authors().get().size(), equalTo(1));
-        assertThat(storeCopy.entries().get().get(0).authors().get().size(), equalTo(2));
+        assertEquals(store.entries().get().get(0).authors().get().size(), 1);
+        assertEquals(storeCopy.entries().get().get(0).authors().get().size(), 2);
     }
 }

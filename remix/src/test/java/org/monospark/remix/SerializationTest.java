@@ -1,13 +1,11 @@
 package org.monospark.remix;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.*;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SerializationTest {
 
@@ -30,7 +28,7 @@ public class SerializationTest {
         ObjectInputStream ois = new ObjectInputStream(in);
         Car s = (Car) ois.readObject();
 
-        assertThat(s, is(equalTo(c)));
+        assertEquals(s, c);
     }
 
     @Test
@@ -52,15 +50,15 @@ public class SerializationTest {
         ObjectInputStream ois = new ObjectInputStream(in);
         CarSerializableRecord s = (CarSerializableRecord) ois.readObject();
 
-        assertThat(s, is(equalTo(c)));
+        assertEquals(s, c);
     }
 
-    @Ignore
+    @Disabled
     public static record Car(String manufacturer, Wrapped<String> model, WrappedInt price,
                              MutableBoolean available) implements Serializable {
     }
 
-    @Ignore
+    @Disabled
     public static record CarSerializableRecord(String manufacturer, Wrapped<String> model, WrappedInt price,
                                                MutableBoolean available) implements SerializableRecord {
         @Override

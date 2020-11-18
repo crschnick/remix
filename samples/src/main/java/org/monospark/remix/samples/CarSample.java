@@ -39,7 +39,12 @@ public class CarSample {
         cars.clear();
 
         List<Car> databaseContent = Records.get(store::cars);
+
         // Throws an exception, since the returned view is unmodifiable
-        databaseContent.clear();
+        // databaseContent.clear();
+
+        CarStorage copy = Records.copy(store);
+        var c = Records.get(copy::cars).get(0);
+        Records.set(c::available, false);
     }
 }

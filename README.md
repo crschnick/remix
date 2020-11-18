@@ -6,6 +6,49 @@
 
 Remix is a new lightweight Java library that provides useful features for the
 newly introduced [record classes](https://openjdk.java.net/jeps/395), which are planned to release with JDK 16.
+These features currently include:
+
+- [Record builders](#record-builders)
+- [Record blanks](#record-blanks)
+- [Wrapped components](#wrapped-components)
+- [Mutable components](#mutable-components)
+- [Copies and deep copies](#copies-and-deep-copies)
+- [Structural copies](#structural-copies)
+- [Serialization support](#serialization)
+
+### Installation
+
+To use Remix and record classes, you must use a build of [JDK 15](https://jdk.java.net/15/) with
+[preview features](https://docs.oracle.com/en/java/javase/15/language/preview-language-and-vm-features.html) enabled.
+To use Remix with Maven you have to add the following entries to your pom:
+
+    <dependency>
+      <groupId>org.monospark</groupId>
+      <artifactId>remix</artifactId>
+      <version>0.1</version>
+    </dependency>
+    
+    <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+        <configuration>
+            <release>15</release>
+            <compilerArgs>--enable-preview</compilerArgs>
+        </configuration>
+    </plugin>
+
+For gradle, add the following entries to your build.gradle file:
+
+    dependencies {
+        implementation group: 'org.monospark', name: 'remix', version: '0.1'
+    }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs += "--enable-preview"
+    }
+
+### Why a new library?
 
 While there already exist libraries that provide many of the same features as record classes and Remix, like
 [Auto](https://github.com/google/auto/), there are two significant differences:
@@ -16,35 +59,6 @@ of the box when adding it as a dependency to your project
 - Remix focuses exclusively on records and is therefore able to exploit every
 single aspect of records better than a library with a more general focus.
 Many features that remix provides are only possible because of the strict requirements for record classes.
-
-Features:
-
-- [Record builders](#record-builders)
-- [Record blanks](#record-blanks)
-- [Wrapped components](#wrapped-components)
-- [Mutable components](#mutable-components)
-- [Copies and deep copies](#copies-and-deep-copies)
-- [Structural copies](#structural-copies)
-- [Serialization support](#serialization)
-
-## Installation
-
-To use Remix and record classes, you must use one of the following:
-- An early-access build of [JDK 16](https://jdk.java.net/16/)
-- [JDK 15](https://jdk.java.net/15/) with [preview features](https://docs.oracle.com/en/java/javase/15/language/preview-language-and-vm-features.html) enabled
-
-Maven:
-
-    <dependency>
-      <groupId>org.monospark</groupId>
-      <artifactId>remix</artifactId>
-      <version>0.1</version>
-    </dependency>
-    
-Gradle:
-
-    implementation group: 'org.monospark', name: 'remix', version: '0.1'
-
 
 ## Record builders
 
@@ -83,7 +97,7 @@ These blank records can also be reused to effectively implement default values f
     
 ## Wrapped components
 
-### Limits of records
+#### Limits of records
 
 According to the Java Language Specification, a record class is designed to be a shallowly immutable and
 transparent carrier for a fixed set of values, called the record components.
@@ -130,7 +144,7 @@ Therefore, with standard records, it is impossible to solve this problem.
 The goal of remix is to provide tools to selectively override standard record
 behaviour for specific record components when needed.
     
-### Wrapped components
+#### Wrapped components
 
 If we want to achieve complete immutability from the outside, we can use wrapped components provided by Remix.
 This is done by wrapping the needed record components and creating a Remix object,
@@ -182,7 +196,7 @@ Remix therefore allows you to add custom behaviour to record components only whe
 ## Mutable components
 
 Remix also provides mutable wrappers that enable you to modify record
-components that would otherwise completely be immutable without violating the basic concepts of records.
+components that would otherwise be immutable without violating the basic concepts of records.
 For example, we can modify the Car record to make the price and availability mutable and add input validation:
 
     @Remix
@@ -205,13 +219,14 @@ We can then modify car instances as follows:
             .set(Car::available).to(() -> true)
             .build();
     Records.set(car::available, false);
-    Records.set(car::price, 12000);
+    int currentPrice = Records.get(car::price);
+    Records.set(car::price, currentPrice - 1000);
     
     // Throws an illegal argument exception
     Records.set(car::price, -5);
     
     
-The builder semantics however stay the same.
+The builder semantics stay the same with wrapped components.
 
 
 ## Copies and deep copies
@@ -228,77 +243,49 @@ However, this does not work if you want to perform copies of records
 that have for example have a collection as a record component,
 since the collection contents are not copied.
 In this case, deep copies have to be performed to completely decouple copies of original instances.
+Lets take the following example of copying the car storage:
 
-Lets take the following example of managing a storage of in-progress publications
-where the authors and the title can still change.
-An entry of this store looks like this:
-
-    @Remix(Entry.Remixer.class)
-    record Entry(Mutable<List<String>> authors,
-                 Mutable<String> title,
-                 Wrapped<UUID> id) {
-
-        static class Remixer implements RecordRemixer<Entry> {
-            @Override
-            public void create(RecordRemix<Bibliography.Entry> r) {
-                r.get(o -> o.add(Bibliography.Entry::authors, Collections::unmodifiableList));
-                r.assign(o -> o
-                        .notNull(o.all())
-                        .check(Bibliography.Entry::authors, c -> !c.contains(null))
-                        .add(Bibliography.Entry::authors, ArrayList::new)
-                );
-            }
-        }
-    }
+    CarStorage copy = Records.copy(store);
+    var c = Records.get(copy::cars).get(0);
     
-The storage record could look like this:
-    
-    @Remix(Bibliography.Remixer.class)
-    public record Bibliography(Wrapped<List<Bibliography.Entry>> entries) {
-    
-        static class Remixer implements RecordRemixer<Bibliography> {
-            @Override
-            public void create(RecordRemix<Bibliography> r) {
-                // The default value should be an empty array list
-                r.blank(b -> {
-                    b.set(Bibliography::entries=.to(() -> new ArrayList<>());
-                });
-    
-                // Return an unmodifiable list view to prevent tampering from outside
-                r.get(o -> o.add(Bibliography::entries, Collections::unmodifiableList));
-    
-                // Check for null and make a defensive copy of the list when constructing an instance.
-                r.assign(o -> o
-                        .notNull(Bibliography::entries)
-                        .check(Bibliography::entries, c -> !c.contains(null))
-                        .add(Bibliography::entries, ArrayList::new)
-                );
-    
-                // Perform a deep copy. Otherwise, operations working on the copied bibliography entries
-                // will change the entries of this one as well!
-                r.copy(o -> o
-                        .add(Bibliography::entries, e -> e.stream()
-                        .map(Records::copy)
-                        .collect(Collectors.toCollection(ArrayList::new))));
-            }
-        }
-    }
+    // This changes the availability of the car in the original storage as well!
+    Records.set(c::available, false);
 
 If we want to support copying instances of the storage record using `Records.copy(...)`
-and want to perform a deep copy, we have to explicitly specify the copy operations as shown above.
+and want to perform a deep copy, we have to explicitly specify the copy operations.:
+
+    @Remix
+    public record CarStorage(Wrapped<List<Car>> cars, int capacity) {    
+        private static void createRemix(RecordRemix<CarStorage> r) {
+            r.assign(o -> o
+                    .check(CarStorage::capacity, c -> c > 0)
+                    .notNull(CarStorage::cars)
+                    .check(CarStorage::cars, c -> c.stream().noneMatch(Objects::isNull))
+                    .add(CarStorage::cars, ArrayList::new)
+            );
+            
+            // Perform a deep copy!
+            r.copy(o -> o.add(CarStorage::cars, e -> e.stream()
+                    .map(Records::copy)
+                    .collect(Collectors.toCollection(ArrayList::new))));
+        }
+    
+        public void addCar(Car car) {
+            if (car == null || Records.get(this::cars).size() == Records.get(this::capacity)) {
+                return;
+            }
+    
+            cars.get().add(Objects.requireNonNull(car));
+        }
+    }
+
 This allows us to work on copied storages like this:
 
-    var entry = Records.create(BibliographyStore.Entry.class,
-            List.of("James Gosling"),
-            "The Java Programming Language",
-            UUID.randomUUID());
-    var store = Records.create(BibliographyStore.class, List.of(entry));
-
-    var storeCopy = Records.copy(store);
-    var entryInStoreCopy = Records.get(storeCopy::entries).get(0);
-
-    // This does not change the entry title in the original store because we are working on a deep copy!
-    Records.set(entryInStoreCopy::authors, List.of("Ken Arnold", "James Gosling"));
+    CarStorage copy = Records.copy(store);
+    var c = Records.get(copy::cars).get(0);
+    
+    // This does not change the availability of the car in the original storage!
+    Records.set(c::available, false);
 
 ## Structural copies
 

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Remix
 public record CarStorage(Wrapped<List<Car>> cars, WrappedInt capacity) {
@@ -22,6 +23,9 @@ public record CarStorage(Wrapped<List<Car>> cars, WrappedInt capacity) {
                 .check(CarStorage::cars, c -> c.stream().noneMatch(Objects::isNull))
                 .add(CarStorage::cars, ArrayList::new)
         );
+        r.copy(o -> o.add(CarStorage::cars, e -> e.stream()
+                .map(Records::copy)
+                .collect(Collectors.toCollection(ArrayList::new))));
     }
 
     public void addCar(Car car) {

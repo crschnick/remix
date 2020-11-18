@@ -38,5 +38,6 @@ javadoc{
     options {
         addBooleanOption('-enable-preview', true)
         addStringOption('-release', '15')
+        addStringOption('link', 'https://docs.oracle.com/en/java/javase/15/docs/api/')
     }
 }

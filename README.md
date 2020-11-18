@@ -1,6 +1,5 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.monospark/remix/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.monospark/remix)
 [![javadoc](https://javadoc.io/badge2/org.monospark/remix/javadoc.svg)](https://javadoc.io/doc/org.monospark/remix)
-[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 [![Build Status](https://travis-ci.com/Monospark/remix.svg?token=SUawnpzswy23eTDodnmo&branch=master)](https://travis-ci.org/monospark/remix)
 
 # Remix
@@ -8,9 +7,23 @@
 Remix is a new lightweight Java library that provides useful features for the
 newly introduced [record classes](https://openjdk.java.net/jeps/395), which are planned to release with JDK 16.
 
+While there already exist libraries that provide many of the same features as record classes and Remix, like
+[Auto](https://github.com/google/auto/), there are two significant differences:
+
+- Remix requires no annotation processor and therefore works out
+of the box when adding it as a dependency to your project
+
+- Remix focuses exclusively on records and is therefore able to exploit every
+single aspect of records better than a library with a more general focus.
+Many features that remix provides are only possible because of the strict requirements for record classes.
+
+Features:
+
+- [Record builders](#Record builders)
+
 ## Installation
 
-To use Remix, you must use one of the following:
+To use Remix and record classes, you must use one of the following:
 - An early-access build of [JDK 16](https://jdk.java.net/16/)
 - [JDK 15](https://jdk.java.net/15/) with [preview features](https://docs.oracle.com/en/java/javase/15/language/preview-language-and-vm-features.html) enabled
 
@@ -26,19 +39,6 @@ Gradle:
 
     implementation group: 'org.monospark', name: 'remix', version: '0.1'
 
-## Motivation
-
-According to the Java Language Specification, a record class is a shallowly immutable and
-transparent carrier for a fixed set of values, called the record components.
-In their basic form however, records are severely limited in their capabilities and applications.
-While there already exist libraries that effectively provide the same features as record classes and Remix, like
-[Auto](https://github.com/google/auto/), there are two significant differences:
-
-- Remix requires no annotation processor and therefore works out
-of the box when adding it as a dependency to your project
-- Remix focuses exclusively on records and is therefore able to exploit every
-single aspect of records better than a library with a more general focus.
-Many features that remix provides are only possible because of the strict requirements for record classes 
 
 ## Record builders
 
@@ -75,49 +75,81 @@ These blank records can also be reused to effectively implement default values f
             .set(Car::available).to(() -> true)
             .build();
     
-## Wrapped components
+## Limits of records
 
-One limitation of records is that there is no possibility to override the
-component accessors or to validate some inputs without defining a complete canonical constructor.
-When working with the following record:
+According to the Java Language Specification, a record class is designed to be a shallowly immutable and
+transparent carrier for a fixed set of values, called the record components.
+While this shallow immutability is acceptable when working with records internally,
+it is nod ... when exposing records to other users.
+In their basic form however, records are severely limited in their capabilities
+and applications, because they are not completely mutable and not completely immutable.
 
-    public record CarStorage(List<Car> cars) {
+Suppose we want to create a simple car storage class.
+However, we want to be able to add new cars to it and validate the added car objects.
+This does not violate the record definition, since the car list object itself does not change, only its content does.
+Furthermore, we don't want to be able to add cars from the outside without doing validation.
+
+    public record CarStorage(List<Car> cars, int capacity) {
         public void addCar(Car car) {
-            Objects.requireNonNull(car);
+            // Do some validation
+            if (car == null || cars.size() == capacity) {
+                return;
+            }
             
-            // Do some database stuff ...
-        
-            // If we succeed, add the car to the storage
-            cars.get().add(car);
+            cars.add(car);
         }
     }
     
-which represents the car data stored in some database, a big problem is that the
-list itself is still mutable and can be accessed and modified from the outside.
-If we want to achieve complete immutability from the outside, then we can use wrapped components provided by Remix.
-This is done by wrapping record components and defining a Remixer class,
-that is able to alter the standard record behaviour:
+However, there are several problems with the record:
 
-    @Remix(CarStorage.Remixer.class)
-    public record CarStorage(Wrapped<List<Car>> cars) {   
+    List<Car> cars = new ArrayList<>();
+    cars.add(c1);
+    cars.add(c2);
+    CarStorage store = new CarStorage(cars);
+
+    // Alters the database from the outside!
+    cars.remove(c1);
+
+    List<Car> storeContent = store.cars();
+    // Clears the contents of the store from the outside!
+    storeContent.clear();
+
+To solve these problems, we have to make a defensive copy of the list when constructing an instance and
+return an unmodifiable list view to prevent tampering with the database from outside this instance.
+With records however, there is no possibility to override the component getters.
+Therefore, with standard records, it is impossible to solve this problem.
+
+The goal of remix is to provide tools to selectively override standard record
+behaviour for specific record components when needed.
+    
+## Wrapped components
+
+If we want to achieve complete immutability from the outside, we can use wrapped components provided by Remix.
+This is done by wrapping the needed record components and creating a Remix object,
+which is able to alter the standard record behaviour:
+
+    @Remix
+    public record CarStorage(Wrapped<List<Car>> cars, WrappedInt capacity) {   
         public void addCar(Car car) {
-            cars.get().add(Objects.requireNonNull(car));
+            if (car == null || cars.get().size() == capacity.get()) {
+                return;
+            }
+            
+            cars.add(car);
         }
         
-        static class Remixer implements RecordRemixer<CarStorage> {
-            @Override
-            public void create(RecordRemix<CarStorage> r) {
-                // Return an unmodifiable list view to prevent tampering
-                // with the database from outside this instance
-                r.get(o -> o.add(CarStorage::cars, Collections::unmodifiableList));
+        private static void createRemix(RecordRemix<CarStorage> r) {
+            // Return an unmodifiable list view when calling the component getter
+            // to prevent tampering with the storage from the outside
+            r.get(o -> o.add(CarStorage::cars, Collections::unmodifiableList));
     
-                // Check for null and make a defensive copy of the list when constructing an instance.
-                r.assign(o -> o
-                        .notNull(CarStorage::cars)
-                        .check(CarStorage::cars, c -> !c.contains(null))
-                        .add(CarStorage::cars, ArrayList::new)
-                );
-            }
+            // Check for null and make a defensive copy of the list when constructing an instance.
+            r.assign(o -> o
+                    .check(CarStorage::capacity, c -> c > 0)
+                    .notNull(CarStorage::cars)
+                    .check(CarStorage::cars, c -> c.stream().noneMatch(Objects::isNull))
+                    .add(CarStorage::cars, ArrayList::new)
+            );
         }
     }
     
@@ -127,7 +159,7 @@ does input validation while still being a simple value storage:
     List<Car> cars = new ArrayList<>();
     cars.add(c1);
     cars.add(c2);
-    CarStorage store = Records.create(CarStorage.class, cars);
+    CarStorage store = Records.create(CarStorage.class, cars, 100);
 
     // Doesn't alter the database since we made a defensive copy
     cars.clear();
@@ -136,18 +168,25 @@ does input validation while still being a simple value storage:
     // Throws an exception, since the returned view is unmodifiable
     databaseContent.clear();
     
-A Remixer class therefore allows you to add custom
-behaviour to record components only when needed.
-    
+Remix therefore allows you to add custom behaviour to record components only when needed.
+
     
 ## Mutable components
 
-While records are only designed to be shallowly immutable value stores.
-This allows Remix to provide Mutable wrappers that enable you to modify record
+Remix also provides mutable wrappers that enable you to modify record
 components that would otherwise completely be immutable without violating the basic concepts of records.
-For example, we can modify the Car record to make the price and availability mutable:
+For example, we can modify the Car record to make the price and availability mutable and add input validation:
 
-    record Car(String manufacturer, String model, MutableInt price, MutableBoolean available) {}
+    @Remix
+    public record Car(Wrapped<String> manufacturer, Wrapped<String> model, MutableInt price,
+                             MutableBoolean available) {
+        private static void createRemix(RecordRemix<Car> r) {
+            r.assign(o -> o
+                    .notNull(o.all())
+                    .check(Car::price, p -> p > 0)
+            );
+        }
+    }
     
 We can then modify car instances as follows:
 
@@ -160,11 +199,16 @@ We can then modify car instances as follows:
     Records.set(car::available, false);
     Records.set(car::price, 12000);
     
+    // Throws an illegal argument exception
+    Records.set(car::price, -5);
+    
+    
 The builder semantics however stay the same.
 
 
 ## Copies and deep copies
 
+One commonly needed feature is copying or cloning record instances.
 In most cases, using the `Records.copy(...)` method works out of the box.
 For example, instances of the Car record can easily be copied:
 
@@ -173,7 +217,8 @@ For example, instances of the Car record can easily be copied:
     Records.set(copy::available, false);
 
 However, this does not work if you want to perform copies of records
-that have a mutable component, like a mutable set or list.
+that have for example have a collection as a record component,
+since the collection contents are not copied.
 In this case, deep copies have to be performed to completely decouple copies of original instances.
 
 Lets take the following example of managing a storage of in-progress publications
@@ -287,7 +332,8 @@ However, if assignment constraints are violated, an exception will be thrown:
     
 ## Serialization
 
-If your record class does not have any wrapped components, then there is nothing to take care of.
+Records can be marked as serializable just as any other class and if
+your record class does not have any wrapped components, then there is nothing to take care of.
 Otherwise, there are two ways of making records serializable when working with wrapped record components.
 The first way is just implementing `Serializable` as normal, i.e.
 
@@ -338,7 +384,7 @@ This is useful if you need some kind of custom value storage for only one method
 If you want to add some custom behaviour to that local record as well, use can do it like this:
 
     void doStuff() {
-        record TripleEntry(Mutable<String> stringId, MutableInt intId, Wrapped<Object> value) {}
+        record TripleEntry(Mutable<String> stringId, MutableInt intId, Object value) {}
         Records.remix(TripleEntry.class, r -> r.assign(o -> o
                 .notNull(o.all())
                 .check(TripleEntry::stringId, s -> s.length() >= 5)
@@ -347,12 +393,10 @@ If you want to add some custom behaviour to that local record as well, use can d
 
         // Do some stuff ...
     }
-    
-This is also shorter than explicitly defining a Remixer class and annotating the record class.
 
-## More
+## Miscellaneous
 
-- Samples are available [here](https://github.com/crschnick/remix/tree/master/samples/src/main/java/org/monospark/remix/samples)
+- Some samples are available [here](https://github.com/crschnick/remix/tree/master/samples/src/main/java/org/monospark/remix/samples)
 - The javadocs are available at [javadoc.io](https://javadoc.io/doc/org.monospark/remix )
 - This is a new library, so there will probably be some bugs.
 If you stumble upon one of them, please report them.

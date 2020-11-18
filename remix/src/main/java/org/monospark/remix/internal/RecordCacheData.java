@@ -3,6 +3,8 @@ package org.monospark.remix.internal;
 import org.monospark.remix.*;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 public class RecordCacheData<T extends Record> {
@@ -29,11 +31,24 @@ public class RecordCacheData<T extends Record> {
             if (recordClass.getDeclaredConstructors().length > 1) {
                 throw new RemixException("More than one constructors declared");
             }
+
             if (remixer != null) {
                 remixer.create(remix);
             } else {
-                Class<T> clazz = (Class<T>) recordClass.getAnnotation(Remix.class).value();
-                RecordRemixCache.getOrAddRecordRemixer(clazz).create(remix);
+                var value = (Class<T>) recordClass.getAnnotation(Remix.class).value();
+                if (!value.equals(Remix.None.class)) {
+                    RecordRemixCache.getOrAddRecordRemixer(value).create(remix);
+                } else {
+                    try {
+                        Method m = recordClass.getDeclaredMethod("createRemix", RecordRemix.class);
+                        m.setAccessible(true);
+                        m.invoke(null, remix);
+                    } catch (NoSuchMethodException e) {
+                        throw new RemixException("Record class is annotated but missing createRemix method", e);
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        throw new RemixException("Exception while calling createRemix method", e);
+                    }
+                }
             }
         }
 

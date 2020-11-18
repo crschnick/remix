@@ -7,30 +7,28 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-@Remix(CarStorage.Remixer.class)
-public record CarStorage(Wrapped<List<Car>> cars) {
+@Remix
+public record CarStorage(Wrapped<List<Car>> cars, WrappedInt capacity) {
 
-    static class Remixer implements RecordRemixer<CarStorage> {
-        @Override
-        public void create(RecordRemix<CarStorage> r) {
-            // The default value for the car list should be an empty array list
-            r.blank(b -> {
-                b.set(CarStorage::cars).to(ArrayList::new);
-            });
+    private static void createRemix(RecordRemix<CarStorage> r) {
+        // Return an unmodifiable list view when calling the component getter
+        // to prevent tampering with the storage from the outside
+        r.get(o -> o.add(CarStorage::cars, Collections::unmodifiableList));
 
-            // Return an unmodifiable list view to prevent tampering with the database from outside this instance
-            r.get(o -> o.add(CarStorage::cars, Collections::unmodifiableList));
-
-            // Check for null and make a defensive copy of the list when constructing an instance.
-            r.assign(o -> o
-                    .notNull(CarStorage::cars)
-                    .check(CarStorage::cars, c -> !c.contains(null))
-                    .add(CarStorage::cars, ArrayList::new)
-            );
-        }
+        // Check for null and make a defensive copy of the list when constructing an instance.
+        r.assign(o -> o
+                .check(CarStorage::capacity, c -> c > 0)
+                .notNull(CarStorage::cars)
+                .check(CarStorage::cars, c -> c.stream().noneMatch(Objects::isNull))
+                .add(CarStorage::cars, ArrayList::new)
+        );
     }
 
     public void addCar(Car car) {
+        if (car == null || Records.get(this::cars).size() == Records.get(this::capacity)) {
+            return;
+        }
+
         cars.get().add(Objects.requireNonNull(car));
     }
 }

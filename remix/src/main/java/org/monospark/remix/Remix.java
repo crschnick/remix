@@ -9,19 +9,19 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Remix {
 
+    /**
+     * The {@link RecordRemixer} class that should be associated to the record class.
+     * <p>
+     * This annotation only works for record classes.
+     **/
+    Class<? extends RecordRemixer<? extends Record>> value() default None.class;
+
     final class None implements RecordRemixer<Record> {
         @Override
         public void create(RecordRemix<Record> r) {
             throw new UnsupportedOperationException();
         }
     }
-
-    /**
-     * The {@link RecordRemixer} class that should be associated to the record class.
-     *
-     * This annotation only works for record classes.
-     **/
-    Class<? extends RecordRemixer<? extends Record>> value() default None.class;
 
 
 }

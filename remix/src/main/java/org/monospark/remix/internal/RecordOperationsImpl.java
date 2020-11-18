@@ -2,10 +2,9 @@ package org.monospark.remix.internal;
 
 import org.monospark.remix.LambdaSupport;
 import org.monospark.remix.RecordOperations;
-import org.monospark.remix.Wrapped;
+import org.monospark.remix.RemixException;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
@@ -28,6 +27,10 @@ public final class RecordOperationsImpl<R extends Record> implements RecordOpera
             RecordCacheData<R> d = RecordCache.getOrAdd(recordClass);
             List<OperatorEntry<R, T>> matchingEntries = new ArrayList<>();
             for (OperatorEntry<R, ?> e : operatorEntries) {
+                if (e.reference.equals(all) && !param.isWrapped()) {
+                    throw new RemixException("Can't use all() selector in combination with non-wrapped components");
+                }
+
                 if (e.reference.equals(all) || d.getResolverCache().resolveWrapped(e.reference).equals(param)) {
                     matchingEntries.add((OperatorEntry<R, T>) e);
                 }
@@ -56,13 +59,13 @@ public final class RecordOperationsImpl<R extends Record> implements RecordOpera
     }
 
     @Override
-    public <T> RecordOperations<R> notNull(LambdaSupport.WrappedFunction<R,T> component) {
+    public <T> RecordOperations<R> notNull(LambdaSupport.WrappedFunction<R, T> component) {
         Objects.requireNonNull(component, "Component must be not null");
         return add(component, Objects::requireNonNull);
     }
 
     @Override
-    public <T> RecordOperations<R> check(LambdaSupport.WrappedFunction<R,T> component, Predicate<T> toCheck) {
+    public <T> RecordOperations<R> check(LambdaSupport.WrappedFunction<R, T> component, Predicate<T> toCheck) {
         Objects.requireNonNull(component, "Component must be not null");
         Objects.requireNonNull(toCheck, "Predicate must be not null");
         return add(component, (T v) -> {
@@ -75,7 +78,7 @@ public final class RecordOperationsImpl<R extends Record> implements RecordOpera
     }
 
     @Override
-    public <T> LambdaSupport.WrappedFunction<R,T> all() {
+    public <T> LambdaSupport.WrappedFunction<R, T> all() {
         return (LambdaSupport.WrappedFunction<R, T>) all;
     }
 

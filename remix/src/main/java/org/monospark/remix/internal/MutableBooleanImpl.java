@@ -9,6 +9,11 @@ public final class MutableBooleanImpl extends WrappedBooleanImpl implements Muta
     }
 
     public void set(boolean value) {
+        var ops = getRecordParameter().getSetOperation();
+        if (ops != null) {
+            ops.apply(value);
+        }
+
         super.value = value;
 
     }

@@ -13,10 +13,10 @@ public interface RecordRemix<R extends Record> {
     /**
      * Defines the operations that should be performed when copying a record instance using
      * {@link Records#copy(Record)} and {@link Records#structuralCopy(Class, Record)}
-     *
+     * <p>
      * If the copy operations should be different,
      * override this method to explicitly specify copy operations.
-     *
+     * <p>
      * Otherwise, the {@link #get(Consumer)} and {@link #assign(Consumer)} are used to determine the copy operations.
      **/
     public void copy(Consumer<RecordOperations<R>> operations);
@@ -24,7 +24,7 @@ public interface RecordRemix<R extends Record> {
     /**
      * Adding a {@code get} operation to a record component specifies that an
      * operation should be performed when calling the accessor of the associated record component.
-     *
+     * <p>
      * Requires the record component to be wrapped using either {@link Wrapped},
      * {@link Mutable} or one of its primitive equivalents.
      **/
@@ -33,11 +33,11 @@ public interface RecordRemix<R extends Record> {
     /**
      * Adding a {@code assign} operation to a record component specifies that an
      * operation should be performed when assigning a value to the associated record component.
-     *
+     * <p>
      * Assignment is defined as the initial value assignment in the constructor and the assignment using
      * {@link Records#set(LambdaSupport.MutableSupplier, Object)} if
      * the record component is made mutable by using {@link Mutable}.
-     *
+     * <p>
      * Requires the record component to be wrapped using either {@link Wrapped}, {@link Mutable}
      * or one of its primitive equivalents.
      **/
@@ -47,10 +47,10 @@ public interface RecordRemix<R extends Record> {
      * Adding a {@code set} operation to a record component specifies that an
      * operation should be performed when setting the value of the associated record
      * component using {@link Records#set(LambdaSupport.MutableSupplier, Object)}
-     *
+     * <p>
      * If the actions performed for the constructor assignment and setter assignment should be different,
      * override this method to explicitly specify setter operations.
-     *
+     * <p>
      * Otherwise, {@link #assign(Consumer)} is used to determine the setter operations.
      **/
     public void set(Consumer<RecordOperations<R>> operations);

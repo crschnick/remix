@@ -1,6 +1,8 @@
 package org.monospark.remix.internal;
 
-import org.monospark.remix.*;
+import org.monospark.remix.LambdaSupport;
+import org.monospark.remix.RecordResolveException;
+import org.monospark.remix.Records;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
@@ -11,18 +13,12 @@ import java.util.function.Supplier;
 
 public final class RecordResolver<R extends Record> {
 
-    public static record ParameterValue<T>(RecordParameter parameter, T value) {}
-
     private List<RecordParameter> parameters;
-
     private R primitiveInstance;
     private Map<RecordParameter, Object> primitiveValueMap;
-
     private R wrapperInstance;
-
     private List<R> booleanResolveInstances;
     private R learnedObjectsInstance;
-
     private Map<RecordParameter, Object> cachedParameters;
 
     RecordResolver(Constructor<R> constructor, List<RecordParameter> parameters) {
@@ -35,7 +31,7 @@ public final class RecordResolver<R extends Record> {
         this.learnedObjectsInstance = createLearnedObjectsInstance();
     }
 
-    <T> RecordParameter resolveWrapped(LambdaSupport.WrappedFunction<R,T> methodRef) {
+    <T> RecordParameter resolveWrapped(LambdaSupport.WrappedFunction<R, T> methodRef) {
         Object wrapperValue = methodRef.apply(wrapperInstance);
         return ((Wrapper) wrapperValue).getRecordParameter();
     }
@@ -66,8 +62,7 @@ public final class RecordResolver<R extends Record> {
         // Check for boolean
         else if (value.getClass().equals(Boolean.class)) {
             return new ParameterValue<>(resolveBoolean((Function<R, Boolean>) methodRef), value);
-        }
-        else {
+        } else {
             boolean boxed = methodRef.apply(primitiveInstance) != null;
             if (boxed) {
                 for (RecordParameter p : parameters) {
@@ -96,7 +91,6 @@ public final class RecordResolver<R extends Record> {
         R obj = Records.createRaw(constructor.getDeclaringClass(), args);
         return obj;
     }
-
 
     private RecordParameter resolveBoolean(Function<R, Boolean> methodRef) {
         return BooleanResolver.resolveParameter(parameters, booleanResolveInstances, methodRef);
@@ -165,5 +159,8 @@ public final class RecordResolver<R extends Record> {
             }
         }
         return (R) Records.createRaw(c, values);
+    }
+
+    public static record ParameterValue<T>(RecordParameter parameter, T value) {
     }
 }

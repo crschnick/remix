@@ -2,13 +2,9 @@ package org.monospark.remix.internal;
 
 import org.monospark.remix.Wrapped;
 
-import java.io.IOException;
-import java.io.ObjectStreamException;
-import java.io.Serializable;
 import java.util.Objects;
 
-public sealed class WrappedImpl<T> extends Wrapper implements Wrapped<T> permits MutableImpl {
-
+public sealed class WrappedImpl<T> extends Wrapper implements Wrapped<T>permits MutableImpl {
 
 
     protected T value;

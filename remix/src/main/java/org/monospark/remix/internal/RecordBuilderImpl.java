@@ -4,7 +4,8 @@ import org.monospark.remix.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<R> {
 
@@ -49,7 +50,7 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
 
     @Override
     public <T> ComponentContext<R, T> set(Function<R, T> component) {
-        return new ComponentContext<R,T>() {
+        return new ComponentContext<R, T>() {
             @Override
             public RecordBuilder<R> to(Supplier<T> value) {
                 RecordResolver.ParameterValue<T> result = cacheData.getResolverCache().resolve(component, value);
@@ -63,7 +64,7 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
 
     @Override
     public <T> ComponentContext<R, T> set(LambdaSupport.WrappedFunction<R, T> component) {
-        return new ComponentContext<R,T>() {
+        return new ComponentContext<R, T>() {
             @Override
             public RecordBuilder<R> to(Supplier<T> value) {
                 RecordParameter param = cacheData.getResolverCache().resolveWrapped(component);

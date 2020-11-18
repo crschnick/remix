@@ -1,11 +1,13 @@
 package org.monospark.remix;
 
-import org.monospark.remix.internal.*;
+import org.monospark.remix.internal.DefaultValueHelper;
+import org.monospark.remix.internal.RecordBuilderImpl;
+import org.monospark.remix.internal.RecordCache;
+import org.monospark.remix.internal.RecordCacheData;
 
 import java.lang.reflect.Constructor;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
-import java.util.function.Function;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
@@ -70,6 +72,8 @@ public final class Records {
     }
 
     public static <R extends Record> RecordBuilder<R> builder(RecordBlank<R> blank) {
+        Objects.requireNonNull(blank, "Blank can not be null");
+
         return blank.builder();
     }
 
@@ -159,6 +163,7 @@ public final class Records {
         }
         return args;
     }
+
     public static <R extends Record> R copy(R src) {
         Objects.requireNonNull(src, "Record instance must be not null");
         verifyRecord(src.getClass());
@@ -175,45 +180,48 @@ public final class Records {
     }
 
 
-
     public static <T> boolean get(BooleanSupplier component) {
         Objects.requireNonNull(component, "Record component must be not null");
         return component.getAsBoolean();
     }
+
     public static <T> int get(IntSupplier component) {
         Objects.requireNonNull(component, "Record component must be not null");
         return component.getAsInt();
     }
+
     public static <T> T get(Supplier<T> component) {
         Objects.requireNonNull(component, "Record component must be not null");
         return component.get();
     }
 
 
-
     public static boolean get(LambdaSupport.WrappedBooleanSupplier component) {
         Objects.requireNonNull(component, "Record component must be not null");
         return component.get().get();
     }
+
     public static int get(LambdaSupport.WrappedIntSupplier component) {
         Objects.requireNonNull(component, "Record component must be not null");
         return component.get().get();
     }
+
     public static <T> T get(LambdaSupport.WrappedSupplier<T> component) {
         Objects.requireNonNull(component, "Record component must be not null");
         return component.get().get();
     }
 
 
-
     public static void set(LambdaSupport.MutableBooleanSupplier component, boolean value) {
         Objects.requireNonNull(component, "Record component must be not null");
         component.get().set(value);
     }
+
     public static void set(LambdaSupport.MutableIntSupplier component, int value) {
         Objects.requireNonNull(component, "Record component must be not null");
         component.get().set(value);
     }
+
     public static <T> void set(LambdaSupport.MutableSupplier<T> component, T value) {
         Objects.requireNonNull(component, "Record component must be not null");
         component.get().set(value);

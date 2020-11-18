@@ -1,9 +1,5 @@
 package org.monospark.remix;
 
-import org.monospark.remix.internal.WrappedImpl;
-
-import java.io.IOException;
-import java.io.ObjectStreamException;
 import java.io.Serial;
 import java.io.Serializable;
 

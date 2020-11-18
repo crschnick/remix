@@ -1,11 +1,7 @@
 package org.monospark.remix.internal;
 
-import org.monospark.remix.MutableInt;
 import org.monospark.remix.WrappedInt;
 
-import java.io.IOException;
-import java.io.ObjectStreamException;
-import java.io.Serializable;
 import java.util.Objects;
 
 public sealed class WrappedIntImpl extends Wrapper implements WrappedInt permits MutableIntImpl {

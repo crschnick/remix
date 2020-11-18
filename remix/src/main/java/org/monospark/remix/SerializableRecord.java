@@ -1,6 +1,7 @@
 package org.monospark.remix;
 
-import java.io.*;
+import java.io.Serial;
+import java.io.Serializable;
 
 public interface SerializableRecord extends Serializable {
 

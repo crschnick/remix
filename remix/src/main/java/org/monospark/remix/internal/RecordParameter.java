@@ -3,7 +3,6 @@ package org.monospark.remix.internal;
 import org.monospark.remix.RemixException;
 
 import java.io.IOException;
-import java.io.ObjectStreamException;
 import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.RecordComponent;
@@ -22,6 +21,17 @@ public final class RecordParameter implements Serializable {
         this.type = type;
     }
 
+    public static List<RecordParameter> fromRecordComponents(Class<?> recordClass) {
+        var params = Arrays.stream(recordClass.getRecordComponents())
+                .map(comp -> {
+                    RecordComponent component = comp;
+                    RecordComponentType type = RecordComponentType.get(comp.getType());
+                    return new RecordParameter(component, type);
+                })
+                .collect(Collectors.toList());
+        return params;
+    }
+
     @Serial
     private void writeObject(java.io.ObjectOutputStream out)
             throws IOException {
@@ -38,17 +48,6 @@ public final class RecordParameter implements Serializable {
         int index = in.readInt();
         this.component = c.getRecordComponents()[index];
         this.type = RecordComponentType.get(c.getRecordComponents()[index].getType());
-    }
-
-    public static List<RecordParameter> fromRecordComponents(Class<?> recordClass) {
-        var params = Arrays.stream(recordClass.getRecordComponents())
-                .map(comp -> {
-                    RecordComponent component = comp;
-                    RecordComponentType type = RecordComponentType.get(comp.getType());
-                    return new RecordParameter(component, type);
-                })
-                .collect(Collectors.toList());
-        return params;
     }
 
     public Object wrap(Object value) {
@@ -76,6 +75,10 @@ public final class RecordParameter implements Serializable {
         return (Class<T>) component.getDeclaringRecord();
     }
 
+    public boolean isWrapped() {
+        return type.isWrapped();
+    }
+
     public boolean isMutable() {
         return type.isMutable();
     }
@@ -90,5 +93,9 @@ public final class RecordParameter implements Serializable {
 
     public <T> UnaryOperator<T> getGetOperation() {
         return RecordCache.getOrAdd(this.getRecord()).getRemix().getGetOperations().getOperator(this);
+    }
+
+    public <T> UnaryOperator<T> getSetOperation() {
+        return RecordCache.getOrAdd(this.getRecord()).getRemix().getSetOperations().getOperator(this);
     }
 }

@@ -1,6 +1,9 @@
 package org.monospark.remix.internal;
 
-import org.monospark.remix.*;
+import org.monospark.remix.RecordRemix;
+import org.monospark.remix.RecordRemixer;
+import org.monospark.remix.Remix;
+import org.monospark.remix.RemixException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

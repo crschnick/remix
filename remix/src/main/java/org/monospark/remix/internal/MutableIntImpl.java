@@ -1,6 +1,5 @@
 package org.monospark.remix.internal;
 
-import org.monospark.remix.MutableBoolean;
 import org.monospark.remix.MutableInt;
 
 public final class MutableIntImpl extends WrappedIntImpl implements MutableInt {
@@ -10,7 +9,11 @@ public final class MutableIntImpl extends WrappedIntImpl implements MutableInt {
     }
 
     public void set(int value) {
-        super.value = value;
+        var ops = getRecordParameter().getSetOperation();
+        if (ops != null) {
+            ops.apply(value);
+        }
 
+        super.value = value;
     }
 }

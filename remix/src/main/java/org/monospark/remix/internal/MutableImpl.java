@@ -10,6 +10,11 @@ public final class MutableImpl<T> extends WrappedImpl<T> implements Mutable<T> {
 
     @Override
     public void set(T value) {
+        var ops = getRecordParameter().getSetOperation();
+        if (ops != null) {
+            ops.apply(value);
+        }
+
         super.value = value;
     }
 }

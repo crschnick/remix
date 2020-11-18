@@ -19,7 +19,13 @@ Many features that remix provides are only possible because of the strict requir
 
 Features:
 
-- [Record builders](#Record builders)
+- [Record builders](#record-builders)
+- [Record blanks](#record-blanks)
+- [Wrapped components](#wrapped-components)
+- [Mutable components](#mutable-components)
+- [Copies and deep copies](#copies-and-deep-copies)
+- [Structural copies](#structural-copies)
+- [Serialization support](#serialization)
 
 ## Installation
 
@@ -75,7 +81,9 @@ These blank records can also be reused to effectively implement default values f
             .set(Car::available).to(() -> true)
             .build();
     
-## Limits of records
+## Wrapped components
+
+### Limits of records
 
 According to the Java Language Specification, a record class is designed to be a shallowly immutable and
 transparent carrier for a fixed set of values, called the record components.
@@ -122,7 +130,7 @@ Therefore, with standard records, it is impossible to solve this problem.
 The goal of remix is to provide tools to selectively override standard record
 behaviour for specific record components when needed.
     
-## Wrapped components
+### Wrapped components
 
 If we want to achieve complete immutability from the outside, we can use wrapped components provided by Remix.
 This is done by wrapping the needed record components and creating a Remix object,

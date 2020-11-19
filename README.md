@@ -18,6 +18,21 @@ These features currently include:
 Note that this library is still in early development.
 The goal is to release version 1.0 of this library when JDK 16 is in its [final phase](https://openjdk.java.net/projects/jdk/16/).
 
+
+### Why a new library?
+
+While there already exist libraries that provide many of the same features as record classes and Remix, like
+[Auto](https://github.com/google/auto/) or [Lombok](https://projectlombok.org/),
+there are two significant differences:
+
+- Remix requires no annotation processor and therefore works out
+of the box when adding it as a dependency to your project
+
+- Remix focuses exclusively on records and is therefore able to exploit every
+single aspect of records better than a library with a more general focus.
+Many features that remix provides are only possible because of the strict requirements for record classes.
+
+
 ### Installation
 
 To use Remix and record classes, you must use a build of [JDK 15](https://jdk.java.net/15/) with
@@ -51,19 +66,6 @@ For gradle, add the following entries to your build.gradle file:
     tasks.withType(JavaCompile) {
         options.compilerArgs += "--enable-preview"
     }
-
-### Why a new library?
-
-While there already exist libraries that provide many of the same features as record classes and Remix, like
-[Auto](https://github.com/google/auto/) or [Lombok](https://projectlombok.org/),
-there are two significant differences:
-
-- Remix requires no annotation processor and therefore works out
-of the box when adding it as a dependency to your project
-
-- Remix focuses exclusively on records and is therefore able to exploit every
-single aspect of records better than a library with a more general focus.
-Many features that remix provides are only possible because of the strict requirements for record classes.
 
 ## Record builders
 

@@ -1,6 +1,6 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.monospark/remix/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.monospark/remix)
 [![javadoc](https://javadoc.io/badge2/org.monospark/remix/javadoc.svg)](https://javadoc.io/doc/org.monospark/remix)
-[![Build Status](https://travis-ci.com/Monospark/remix.svg?token=SUawnpzswy23eTDodnmo&branch=master)](https://travis-ci.org/monospark/remix)
+[![Build Status](https://travis-ci.org/monospark/remix/Monospark/remix.svg?branch=master)](https://travis-ci.org/monospark/remix)
 
 # Remix
 

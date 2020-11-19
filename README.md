@@ -10,12 +10,12 @@ These features currently include:
 
 - [Record builders](#record-builders)
 - [Record blanks](#record-blanks)
-- [Wrapped components](#wrapped-components)
 - [Mutable components](#mutable-components)
 - [Copies and deep copies](#copies-and-deep-copies)
 - [Structural copies](#structural-copies)
+- [Pattern binding](#pattern-binding)
 
-Note that this library is still in early development.
+Note that this library is still in early development and will change quite drastically.
 The goal is to release version 1.0 of this library when JDK 16 is in its [final phase](https://openjdk.java.net/projects/jdk/16/).
 
 
@@ -121,114 +121,16 @@ that will be used by every created builder as follows:
     
 Now, every builder create with `Records.builder()` automatically sets the manufacturer.
 Next, we will see how Remix objects can be used for input validation and more.
-    
-## Wrapped components
-
-#### Limits of records
-
-According to the Java Language Specification, a record class is designed to be a shallowly immutable and
-transparent carrier for a fixed set of values, called the record components.
-While this shallow immutability is acceptable when working with records internally,
-it is not when making records publicly usable.
-
-Suppose we want to create a simple car storage class.
-However, we want to be able to add new cars to it and validate the added car objects.
-This does not violate the record definition, since the car list object itself does not change, only its content does.
-Furthermore, we don't want to be able to add cars from the outside without doing validation.
-
-    public record CarStorage(List<Car> cars, int capacity) {
-        public void addCar(Car car) {
-            // Do some validation
-            if (car == null || cars.size() == capacity) {
-                return;
-            }
-            
-            cars.add(car);
-        }
-    }
-    
-However, there are several problems with the record:
-
-    List<Car> cars = new ArrayList<>();
-    cars.add(c1);
-    cars.add(c2);
-    CarStorage store = new CarStorage(cars);
-
-    // Alters the database from the outside!
-    cars.remove(c1);
-
-    List<Car> storeContent = store.cars();
-    // Clears the contents of the store from the outside!
-    storeContent.clear();
-
-To solve these problems, we have to make a defensive copy of the list when constructing an instance and
-return an unmodifiable list view to prevent tampering with the database from outside this instance.
-With records however, there is no possibility to override the component getters.
-Therefore, with standard records, it is impossible to solve this problem.
 
 
-Therefore, records in their basic form, are severely limited in their capabilities
-and applications, because they cannot be made completely immutable to the outside when one component is mutable.
-The goal of remix is to provide tools to selectively override this standard record
-behaviour for specific record components when needed.
-    
-#### Using wrapped components
-
-If we want to achieve complete immutability from the outside, we can use wrapped components provided by Remix.
-This is done by wrapping the needed record components and creating a Remix object,
-which is able to alter the standard record behaviour:
-
-    @Remix
-    public record CarStorage(Wrapped<List<Car>> cars, WrappedInt capacity) {   
-        public void addCar(Car car) {
-            if (car == null || cars.get().size() == capacity.get()) {
-                return;
-            }
-            
-            cars.add(car);
-        }
-        
-        private static void createRemix(RecordRemix<CarStorage> r) {
-            // Return an unmodifiable list view when calling the component getter
-            // to prevent tampering with the storage from the outside
-            r.get(o -> o.add(CarStorage::cars, Collections::unmodifiableList));
-    
-            // Check for null and make a defensive copy of the list when constructing an instance.
-            r.assign(o -> o
-                    .check(CarStorage::capacity, c -> c > 0)
-                    .notNull(CarStorage::cars)
-                    .check(CarStorage::cars, c -> c.stream().noneMatch(Objects::isNull))
-                    .add(CarStorage::cars, ArrayList::new)
-            );
-        }
-    }
-    
-Now, the CarStorage class is truly immutable from the outside and
-does input validation while still being a simple value storage:
-
-    List<Car> cars = new ArrayList<>();
-    cars.add(c1);
-    cars.add(c2);
-    CarStorage store = Records.create(CarStorage.class, cars, 100);
-
-    // Doesn't alter the database since we made a defensive copy
-    cars.clear();
-
-    List<Car> databaseContent = Records.get(store::cars);
-    // Throws an exception, since the returned view is unmodifiable
-    databaseContent.clear();
-    
-Remix therefore allows you to add custom behaviour to record components only when needed.
-
-    
-## Mutable components
+## Mutable components (Experimental)
 
 Remix also provides mutable wrappers that enable you to modify record
 components that would otherwise be immutable without violating the basic concepts of records.
 For example, we can modify the Car record to make the price and availability mutable and add input validation:
 
     @Remix
-    public record Car(Wrapped<String> manufacturer, Wrapped<String> model, MutableInt price,
+    public record Car(String manufacturer, String model, MutableInt price,
                              MutableBoolean available) {
         private static void createRemix(RecordRemix<Car> r) {
             r.assign(o -> o
@@ -283,7 +185,7 @@ If we want to support copying instances of the storage record using `Records.cop
 and want to perform a deep copy, we have to explicitly specify the copy operations.:
 
     @Remix
-    public record CarStorage(Wrapped<List<Car>> cars, int capacity) {    
+    public record CarStorage(List<Car> cars, int capacity) {    
         private static void createRemix(RecordRemix<CarStorage> r) {
             r.assign(o -> o
                     .check(CarStorage::capacity, c -> c > 0)
@@ -299,11 +201,11 @@ and want to perform a deep copy, we have to explicitly specify the copy operatio
         }
     
         public void addCar(Car car) {
-            if (car == null || Records.get(this::cars).size() == Records.get(this::capacity)) {
+            if (car == null || cars.size() == capacity) {
                 return;
             }
     
-            cars.get().add(Objects.requireNonNull(car));
+            cars.add(Objects.requireNonNull(car));
         }
     }
 
@@ -320,7 +222,7 @@ This allows us to work on copied storages like this:
 Lets take the following simple color record that defines default values and does input validation:
 
     @Remix(Color.Remixer.class)
-    public record Color(WrappedInt red, WrappedInt green, WrappedInt blue) {
+    public record Color(int red, int green, int blue) {
         public static class Remixer implements RecordRemixer<Color> {
             @Override
             public void create(RecordRemix<Color> r) {
@@ -360,7 +262,7 @@ This is useful if you need some kind of custom value storage for only one method
 If you want to add some custom behaviour to that local record as well, use can do it like this:
 
     void doStuff() {
-        record TripleEntry(Mutable<String> stringId, MutableInt intId, Wrapped<Object> value) {}
+        record TripleEntry(Mutable<String> stringId, MutableInt intId, Object value) {}
         Records.remix(TripleEntry.class, r -> r.assign(o -> o
                 .notNull(o.all())
                 .check(TripleEntry::stringId, s -> s.length() >= 5)
@@ -370,60 +272,11 @@ If you want to add some custom behaviour to that local record as well, use can d
         // Do some stuff ...
     }
     
-    
-## Wrapped component support
-    
-#### Serialization
 
-Records can be marked as serializable just as any other class and if
-your record class does not have any wrapped components, then there is nothing to take care of.
-Otherwise, there are two ways of making records serializable when working with wrapped record components.
-The first way is just implementing `Serializable` as normal, i.e.
-
-    public record Car(Wrapped<String> manufacturer, Wrapped<String> model, WrappedInt price,
-                             MutableBoolean available) implements Serializable {
-    }
-    
-This works as long you don't change any types of record components.
-If, later on, you want to make `model` mutable as well and convert `available` into a normal boolean with
-
-    public record Car(Wrapped<String> manufacturer, Mutable<String> model, WrappedInt price,
-                             boolean available) implements Serializable {
-    }
-
-then this would break serialization compatibility with previous versions.
-
-The alternative is to use `SerializableRecord`, which discards any wrappers
-when serializing and dynamically wraps component values when deserializing.
-If we declare our record class as follows:
-
-    public record Car(String manufacturer, Wrapped<String> model, WrappedInt price,
-                             MutableBoolean available) implements SerializableRecord {
-        @Override
-        public Object writeReplace() {
-            return Records.serialized(this);
-        }
-    }
-    
-and later on change the record class to this:
-
-    public record Car(Wrapped<String> manufacturer, Mutable<String> model, WrappedInt price,
-                               boolean available) implements SerializableRecord {
-        @Override
-        public Object writeReplace() {
-            return Records.serialized(this);
-        }
-    }
-    
-then serialization between both versions will work fine.
-Of course, if the unwrapped type of a component changes, i.e. `int` to ``BigInteger``,
-the order of components changes or components are added/removed,
-then this will make the two versions incompatible.
-
-#### Pattern binding
+## Pattern binding
 
 Inspired by [pattern matching](https://cr.openjdk.java.net/~briangoetz/amber/pattern-match.html),
-Remix supports a form a pattern binding with seamless support for wrapped components.
+Remix supports a form a pattern binding.
 The method `Records.bind()` can construct bindings as follows:
 
     List<Car> cars = List.of( ... );

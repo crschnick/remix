@@ -15,6 +15,9 @@ These features currently include:
 - [Copies and deep copies](#copies-and-deep-copies)
 - [Structural copies](#structural-copies)
 
+Note that this library is still in early development.
+The goal is to release version 1.0 of this library when JDK 16 is in its [final phase](https://openjdk.java.net/projects/jdk/16/).
+
 ### Installation
 
 To use Remix and record classes, you must use a build of [JDK 15](https://jdk.java.net/15/) with
@@ -84,6 +87,8 @@ i.e. null for objects and 0, 0.0, false, etc. for primitives.
     // model and manufacturer are null, price is 0, available is false
     Car defaultCar = Records.builder(Car.class).build();
     
+You can modify this behaviour by specifying a global default value blank as shown next.
+    
 ## Record blanks
 
 In addition, these builders also enable you to create record blanks,
@@ -101,6 +106,19 @@ These blank records can also be reused to effectively implement default values f
             .set(Car::price).to(() -> 60000)
             .set(Car::available).to(() -> true)
             .build();
+         
+By creating a Remix object, we are able to define a global default blank,
+that will be used by every created builder as follows:
+            
+    @Remix
+    public record Car(String manufacturer, String model, int price, boolean available) {
+        private static void createRemix(RecordRemix<Car> r) {
+            r.blank(b -> b.set(Car::manufacturer).to(() -> "RemixCars"));
+        }
+    }
+    
+Now, every builder create with `Records.builder()` automatically sets the manufacturer.
+Next, we will see how Remix objects can be used for input validation and more.
     
 ## Wrapped components
 
@@ -234,7 +252,7 @@ We can then modify car instances as follows:
     Records.set(car::price, -5);
     
     
-The builder semantics stay the same with wrapped components.
+The builder usage stays the same with wrapped components.
 
 
 ## Copies and deep copies

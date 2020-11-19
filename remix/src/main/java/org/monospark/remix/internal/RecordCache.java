@@ -10,7 +10,7 @@ public class RecordCache {
     private static final Map<Class<?>, RecordCacheData<?>> DATA = new HashMap<>();
 
 
-    public static <T extends Record> RecordCacheData<T> getOrAdd(Class<T> recordClass) {
+    public static <R extends Record, T extends R> RecordCacheData<T> getOrAdd(Class<R> recordClass) {
         if (DATA.containsKey(recordClass)) {
             return (RecordCacheData<T>) DATA.get(recordClass);
         } else {

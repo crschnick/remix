@@ -44,8 +44,8 @@ public final class RecordBuilderImpl<R extends Record> implements RecordBuilder<
     }
 
     @Override
-    public RecordBlank<R> blank() {
-        return new RecordBlankImpl<>(recordClass, mapping);
+    public <T extends R> RecordBlank<T> blank() {
+        return new RecordBlankImpl<T>((Class<T>) recordClass, mapping);
     }
 
     @Override

@@ -50,13 +50,15 @@ public final class RecordRemixImpl<T extends Record> implements RecordRemix<T> {
         operations.accept(setOperations);
     }
 
-    public RecordBlank<T> getBlank() {
+    public RecordBlankImpl<T> getBlank() {
         if (blank == null) {
             var b = new RecordBuilderImpl<T>(clazz);
-            blankBuilder.accept(b);
+            if (blankBuilder != null) {
+                blankBuilder.accept(b);
+            }
             blank = b.blank();
         }
-        return blank;
+        return (RecordBlankImpl<T>) blank;
     }
 
     public RecordOperationsImpl<T> getGetOperations() {

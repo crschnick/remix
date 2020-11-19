@@ -6,7 +6,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * If any component is not set, the value of a given record component is set to its default value.
+ * A builder for record classes.
+ *
+ * If any record component is not set to a value during construction,
+ * the value of a given record component is set to its default value.
  * This is either null for objects or the primitive default value for primitives.
  */
 public sealed interface RecordBuilder<R extends Record> permits RecordBuilderImpl {

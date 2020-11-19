@@ -63,10 +63,11 @@ public final class Records {
     public static <R extends Record, T extends R> RecordBuilder<T> builder(Class<R> clazz) {
         verifyRecord(clazz);
 
-        return new RecordBuilderImpl<T>((Class<T>) clazz);
+        RecordCacheData<T> r = RecordCache.getOrAdd(clazz);
+        return Records.builder(r.getRemix().getBlank());
     }
 
-    public static <R extends Record> RecordBuilder<R> builder(RecordBlank<R> blank) {
+    public static <R extends Record, T extends R> RecordBuilder<T> builder(RecordBlank<T> blank) {
         Objects.requireNonNull(blank, "Blank can not be null");
 
         return blank.builder();

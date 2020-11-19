@@ -3,7 +3,13 @@ package org.monospark.remix;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class LambdaSupport {
+/**
+ * A helper class that provides various functional interfaces.
+ * These are needed to provide wrapped overloads to many methods.
+ */
+public final class LambdaSupport {
+
+    private LambdaSupport() {}
 
     @FunctionalInterface
     public interface WrappedBooleanFunction<T> extends Function<T, WrappedBoolean> {

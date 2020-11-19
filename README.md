@@ -27,7 +27,7 @@ To use Remix with Maven you have to add it as a dependency:
     <dependency>
       <groupId>org.monospark</groupId>
       <artifactId>remix</artifactId>
-      <version>0.1</version>
+      <version>0.2</version>
     </dependency>
     
 You also have to enable preview features:
@@ -45,7 +45,7 @@ You also have to enable preview features:
 For gradle, add the following entries to your build.gradle file:
 
     dependencies {
-        implementation group: 'org.monospark', name: 'remix', version: '0.1'
+        implementation group: 'org.monospark', name: 'remix', version: '0.2'
     }
 
     tasks.withType(JavaCompile) {

@@ -9,7 +9,7 @@ import java.util.function.Supplier;
  * If any component is not set, the value of a given record component is set to its default value.
  * This is either null for objects or the primitive default value for primitives.
  */
-public sealed interface RecordBuilder<R extends Record>permits RecordBuilderImpl {
+public sealed interface RecordBuilder<R extends Record> permits RecordBuilderImpl {
 
     /**
      * Creates a new instance of the record class using the previously set record component values.
@@ -17,12 +17,12 @@ public sealed interface RecordBuilder<R extends Record>permits RecordBuilderImpl
      * @throws RecordBuilderException if any parameter does not have a set value or
      *                                any error occurs when calling the canonical record constructor
      */
-    R build();
+    <T extends R> T build();
 
     /**
      * Creates a new blank for the record class using the previously set record component values.
      */
-    RecordBlank<R> blank();
+    <T extends R> RecordBlank<T> blank();
 
     /**
      * Sets the value for a given record component.

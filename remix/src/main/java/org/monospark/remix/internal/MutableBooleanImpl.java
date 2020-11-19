@@ -17,4 +17,9 @@ public final class MutableBooleanImpl extends WrappedBooleanImpl implements Muta
         super.value = value;
 
     }
+
+    @Override
+    public String toString() {
+        return "MutableBoolean{" + value + '}';
+    }
 }

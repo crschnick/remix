@@ -14,19 +14,20 @@ These features currently include:
 - [Mutable components](#mutable-components)
 - [Copies and deep copies](#copies-and-deep-copies)
 - [Structural copies](#structural-copies)
-- [Serialization support](#serialization)
 
 ### Installation
 
 To use Remix and record classes, you must use a build of [JDK 15](https://jdk.java.net/15/) with
 [preview features](https://docs.oracle.com/en/java/javase/15/language/preview-language-and-vm-features.html) enabled.
-To use Remix with Maven you have to add the following entries to your pom:
+To use Remix with Maven you have to add it as a dependency:
 
     <dependency>
       <groupId>org.monospark</groupId>
       <artifactId>remix</artifactId>
       <version>0.1</version>
     </dependency>
+    
+You also have to enable preview features:
     
     <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -51,7 +52,8 @@ For gradle, add the following entries to your build.gradle file:
 ### Why a new library?
 
 While there already exist libraries that provide many of the same features as record classes and Remix, like
-[Auto](https://github.com/google/auto/), there are two significant differences:
+[Auto](https://github.com/google/auto/) or [Lombok](https://projectlombok.org/),
+there are two significant differences:
 
 - Remix requires no annotation processor and therefore works out
 of the box when adding it as a dependency to your project
@@ -331,7 +333,27 @@ However, if assignment constraints are violated, an exception will be thrown:
     // Throws an illegal argument exception
     Color c = Records.structuralCopy(Color.class, oc);
     
-## Serialization
+## Local records
+
+Records are also designed to be used locally in methods.
+This is useful if you need some kind of custom value storage for only one method.
+If you want to add some custom behaviour to that local record as well, use can do it like this:
+
+    void doStuff() {
+        record TripleEntry(Mutable<String> stringId, MutableInt intId, Wrapped<Object> value) {}
+        Records.remix(TripleEntry.class, r -> r.assign(o -> o
+                .notNull(o.all())
+                .check(TripleEntry::stringId, s -> s.length() >= 5)
+                .check(TripleEntry::intId, i -> i >= 0)));
+        List<TripleEntry> list = new ArrayList<>();
+
+        // Do some stuff ...
+    }
+    
+    
+## Wrapped component support
+    
+#### Serialization
 
 Records can be marked as serializable just as any other class and if
 your record class does not have any wrapped components, then there is nothing to take care of.
@@ -378,22 +400,22 @@ Of course, if the unwrapped type of a component changes, i.e. `int` to ``BigInte
 the order of components changes or components are added/removed,
 then this will make the two versions incompatible.
 
-## Local records
+#### Pattern binding
 
-Records are also designed to be used locally in methods.
-This is useful if you need some kind of custom value storage for only one method.
-If you want to add some custom behaviour to that local record as well, use can do it like this:
+Inspired by [pattern matching](https://cr.openjdk.java.net/~briangoetz/amber/pattern-match.html),
+Remix supports a form a pattern binding with seamless support for wrapped components.
+The method `Records.bind()` can construct bindings as follows:
 
-    void doStuff() {
-        record TripleEntry(Mutable<String> stringId, MutableInt intId, Wrapped<Object> value) {}
-        Records.remix(TripleEntry.class, r -> r.assign(o -> o
-                .notNull(o.all())
-                .check(TripleEntry::stringId, s -> s.length() >= 5)
-                .check(TripleEntry::intId, i -> i >= 0)));
-        List<TripleEntry> list = new ArrayList<>();
+    List<Car> cars = List.of( ... );
 
-        // Do some stuff ...
-    }
+    Function<Car,String> nameFunc = Records.bind(Car::manufacturer).and(Car::model)
+            .toFunction((s1, s2) -> String.join(" ", s1, s2));
+    
+    Map<Car,String> names = cars.stream().collect(Collectors.toMap(c -> c, nameFunc));
+    
+This works for consumers, functions and predicates.
+Record components can also be permuted for bindings.
+
 
 ## Miscellaneous
 

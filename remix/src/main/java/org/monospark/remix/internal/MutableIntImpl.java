@@ -16,4 +16,10 @@ public final class MutableIntImpl extends WrappedIntImpl implements MutableInt {
 
         super.value = value;
     }
+
+
+    @Override
+    public String toString() {
+        return "MutableInt{" + value + '}';
+    }
 }

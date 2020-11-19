@@ -17,4 +17,9 @@ public final class MutableImpl<T> extends WrappedImpl<T> implements Mutable<T> {
 
         super.value = value;
     }
+
+    @Override
+    public String toString() {
+        return "Mutable{" + value + '}';
+    }
 }

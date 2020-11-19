@@ -17,7 +17,7 @@ public sealed class WrappedImpl<T> extends Wrapper implements Wrapped<T>permits 
 
     @Override
     public String toString() {
-        return value != null ? value.toString() : "null";
+        return "Wrapped{" + value + '}';
     }
 
     @Override

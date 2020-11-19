@@ -27,9 +27,9 @@ public class RecordCacheData<T extends Record> {
         return recordClass.getAnnotationsByType(Remix.class).length > 0;
     }
 
-    static <R extends Record, T extends RecordRemixer<R>> RecordCacheData<R> fromRecordClass(
-            Class<R> recordClass, RecordRemixer<R> remixer) {
-        RecordRemixImpl<R> remix = new RecordRemixImpl<>(recordClass);
+    static <T extends R, R extends Record, RR extends RecordRemixer<T>> RecordCacheData<T> fromRecordClass(
+            Class<R> recordClass, RecordRemixer<T> remixer) {
+        RecordRemixImpl<T> remix = new RecordRemixImpl<T>((Class<T>) recordClass);
         if (hasRemixAnnotation(recordClass) || remixer != null) {
             if (recordClass.getDeclaredConstructors().length > 1) {
                 throw new RemixException("More than one constructors declared");
@@ -38,7 +38,7 @@ public class RecordCacheData<T extends Record> {
             if (remixer != null) {
                 remixer.create(remix);
             } else {
-                var value = (Class<T>) recordClass.getAnnotation(Remix.class).value();
+                var value = (Class<RR>) recordClass.getAnnotation(Remix.class).value();
                 if (!value.equals(Remix.None.class)) {
                     RecordRemixCache.getOrAddRecordRemixer(value).create(remix);
                 } else {
@@ -55,9 +55,9 @@ public class RecordCacheData<T extends Record> {
             }
         }
 
-        var cons = (Constructor<R>) recordClass.getDeclaredConstructors()[0];
+        var cons = (Constructor<T>) recordClass.getDeclaredConstructors()[0];
         cons.setAccessible(true);
-        return new RecordCacheData<R>(remix, cons,
+        return new RecordCacheData<T>(remix, cons,
                 RecordParameter.fromRecordComponents(recordClass));
     }
 

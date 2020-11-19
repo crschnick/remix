@@ -20,7 +20,7 @@ public class RecordCache {
         }
     }
 
-    public static <T extends Record> void register(Class<T> recordClass, RecordRemixer<T> rm) {
+    public static <T extends R, R extends Record> void register(Class<R> recordClass, RecordRemixer<T> rm) {
         RecordCacheData<T> r = RecordCacheData.fromRecordClass(recordClass, rm);
         DATA.put(recordClass, r);
     }

@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * Magic
+ */
 public final class RecordResolver<R extends Record> {
 
     private List<RecordParameter> parameters;
@@ -31,12 +34,12 @@ public final class RecordResolver<R extends Record> {
         this.learnedObjectsInstance = createLearnedObjectsInstance();
     }
 
-    <T> RecordParameter resolveWrapped(LambdaSupport.WrappedFunction<R, T> methodRef) {
+    public <T> RecordParameter resolveWrapped(LambdaSupport.WrappedFunction<R, T> methodRef) {
         Object wrapperValue = methodRef.apply(wrapperInstance);
         return ((Wrapper) wrapperValue).getRecordParameter();
     }
 
-    <T> ParameterValue<T> resolve(Function<R, T> methodRef, Supplier<T> valueSupplier) {
+    public <T> ParameterValue<T> resolve(Function<R, T> methodRef, Supplier<T> valueSupplier) {
         T value = valueSupplier.get();
 
         // If the value is null, we check whether we already know a parameter instance

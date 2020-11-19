@@ -46,5 +46,9 @@ public class CarSample {
         CarStorage copy = Records.copy(store);
         var c = Records.get(copy::cars).get(0);
         Records.set(c::available, false);
+
+        Records.bind(Car::manufacturer).and(Car::model).to((man, mod) -> {
+
+        }).accept(null);
     }
 }

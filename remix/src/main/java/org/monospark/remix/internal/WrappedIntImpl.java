@@ -23,7 +23,7 @@ public sealed class WrappedIntImpl extends Wrapper implements WrappedInt permits
 
     @Override
     public String toString() {
-        return String.valueOf(value);
+        return "WrappedInt{" + value + '}';
     }
 
     @Override

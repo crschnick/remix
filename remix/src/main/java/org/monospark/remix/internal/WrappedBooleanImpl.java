@@ -26,9 +26,10 @@ public sealed class WrappedBooleanImpl extends Wrapper implements WrappedBoolean
         return Objects.hash(value);
     }
 
+
     @Override
     public String toString() {
-        return Boolean.toString(value);
+        return "WrappedBoolean{" + value + '}';
     }
 
     @Override

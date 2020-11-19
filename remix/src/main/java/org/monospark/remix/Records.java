@@ -1,15 +1,10 @@
 package org.monospark.remix;
 
-import org.monospark.remix.internal.DefaultValueHelper;
-import org.monospark.remix.internal.RecordBuilderImpl;
-import org.monospark.remix.internal.RecordCache;
-import org.monospark.remix.internal.RecordCacheData;
+import org.monospark.remix.internal.*;
 
 import java.lang.reflect.Constructor;
 import java.util.Objects;
-import java.util.function.BooleanSupplier;
-import java.util.function.IntSupplier;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 public final class Records {
 
@@ -65,10 +60,10 @@ public final class Records {
     }
 
 
-    public static <R extends Record> RecordBuilder<R> builder(Class<R> clazz) {
+    public static <R extends Record, T extends R> RecordBuilder<T> builder(Class<R> clazz) {
         verifyRecord(clazz);
 
-        return new RecordBuilderImpl<>(clazz);
+        return new RecordBuilderImpl<T>((Class<T>) clazz);
     }
 
     public static <R extends Record> RecordBuilder<R> builder(RecordBlank<R> blank) {
@@ -77,16 +72,42 @@ public final class Records {
         return blank.builder();
     }
 
-    public static <R extends Record> R create(Class<R> clazz, Object... args) {
+    /**
+     * Creates a new record instance using the given arguments.
+     *
+     * This method validates all arguments, automatically wraps arguments if needed
+     * and performs operations specified by {@link RecordRemix#assign(Consumer)}.
+     *
+     * @param clazz the record class
+     * @param args the constructor arguments
+     * @return a new instance of the record class
+     * @throws NullPointerException if {@code clazz} or {@code args} is null
+     * @throws IllegalArgumentException if {@code clazz} is not a record class
+     * @throws RemixException if an instance could not be constructed for any reason
+     */
+    public static <T extends R, R extends Record> T create(Class<R> clazz, Object... args) {
         verifyRecord(clazz);
         verifyArgs(args);
 
         var r = RecordCache.getOrAdd(clazz);
-        return (R) createInternal(r.getConstructor(), r, args);
+        return (T) createInternal(r.getConstructor(), r, args);
     }
 
-
-    public static <R extends Record> R createRaw(Class<R> clazz, Object... args) {
+    /**
+     * Creates a new record instance using the given arguments.
+     *
+     * This method does not perform validation and does not perform operations
+     * specified by {@link RecordRemix#assign(Consumer)}.
+     * However, it automatically wraps arguments if needed.
+     *
+     * @param clazz the record class
+     * @param args the constructor arguments
+     * @return a new instance of the record class
+     * @throws NullPointerException if {@code clazz} or {@code args} is null
+     * @throws IllegalArgumentException if {@code clazz} is not a record class
+     * @throws RemixException if an instance could not be constructed for any reason
+     */
+    public static <T extends R, R extends Record> T createRaw(Class<T> clazz, Object... args) {
         verifyRecord(clazz);
         verifyArgs(args);
 
@@ -100,11 +121,12 @@ public final class Records {
         try {
             return RecordCache.getOrAdd(clazz).getConstructor().newInstance(newArgs);
         } catch (Exception e) {
-            throw new IllegalArgumentException(e);
+            throw new RemixException("Could not create new record instance of "
+                    + clazz.getName(), e);
         }
     }
 
-    public static <R extends Record> R fromArray(Class<R> clazz, Object[] values) {
+    public static <T extends R, R extends Record> T fromArray(Class<R> clazz, Object[] values) {
         verifyRecord(clazz);
         verifyArgs(values);
 
@@ -133,7 +155,7 @@ public final class Records {
     }
 
 
-    public static <R extends Record> void remix(Class<R> src, RecordRemixer<R> rm) {
+    public static <T extends R, R extends Record> void remix(Class<R> src, RecordRemixer<T> rm) {
         verifyRecord(src);
         Objects.requireNonNull(rm, "Remixer must be not null");
 
@@ -171,7 +193,7 @@ public final class Records {
         return fromArray((Class<R>) src.getClass(), copyValues(src));
     }
 
-    public static <D extends Record, S extends Record> D structuralCopy(Class<D> destClass, S src) {
+    public static <T extends D, D extends Record, S extends Record> T structuralCopy(Class<D> destClass, S src) {
         Objects.requireNonNull(src, "Record instance must be not null");
         verifyRecord(src.getClass());
         verifyRecord(destClass);
@@ -180,12 +202,12 @@ public final class Records {
     }
 
 
-    public static <T> boolean get(BooleanSupplier component) {
+    public static boolean get(BooleanSupplier component) {
         Objects.requireNonNull(component, "Record component must be not null");
         return component.getAsBoolean();
     }
 
-    public static <T> int get(IntSupplier component) {
+    public static int get(IntSupplier component) {
         Objects.requireNonNull(component, "Record component must be not null");
         return component.getAsInt();
     }
@@ -225,5 +247,17 @@ public final class Records {
     public static <T> void set(LambdaSupport.MutableSupplier<T> component, T value) {
         Objects.requireNonNull(component, "Record component must be not null");
         component.get().set(value);
+    }
+
+    public static <R extends Record,T1> RecordBinder<R, T1> bind(Function<R, T1> t1) {
+        Objects.requireNonNull(t1, "Record component must be not null");
+
+       return new RecordBinderImpl<R,T1>(t1);
+    }
+
+    public static <R extends Record,T1> RecordBinder<R, T1> bind(LambdaSupport.WrappedFunction<R, T1> t1) {
+        Objects.requireNonNull(t1, "Record component must be not null");
+
+        return new RecordBinderImpl<R,T1>(t1);
     }
 }
